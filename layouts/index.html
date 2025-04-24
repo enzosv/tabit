@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Habit Tracker</title>
+    <link rel="stylesheet" href="../static/vendor/bootstrap.min.css" />
+    <link rel="stylesheet" href="../static/vendor/cal-heatmap.css" />
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+  </head>
+  <body class="p-3">
+    <div class="container">
+      <h1 class="mb-4">🧠 Habit Tracker</h1>
+
+      <!-- Section to add new habits -->
+      <div class="input-group mb-4">
+        <input
+          type="text"
+          id="new-habit-name"
+          class="form-control"
+          placeholder="Enter new habit name"
+          aria-label="New habit name"
+        />
+        <button class="btn btn-outline-secondary" type="button" id="add-habit">
+          Add Habit
+        </button>
+      </div>
+
+      <!-- Container for dynamically added habits -->
+      <div id="habits-container">
+        <!-- Habit sections will be added here by JS -->
+      </div>
+
+      <!-- Removed old buttons and single calendar -->
+      <!--
+      <div id="habit-calendar"></div>
+      <button id="add-checkin" class="btn btn-primary mt-4">
+        ✅ Mark Today
+      </button>
+      <button id="sync-to-cloud" class="btn btn-secondary mt-2">
+        ☁️ Sync to Cloud
+      </button>
+       -->
+    </div>
+
+    <script src="../static/vendor/jquery-3.7.1.slim.min.js"></script>
+    <script src="../static/vendor/bootstrap.bundle.min.js"></script>
+    <script src="../static/vendor/d3.v7.min.js"></script>
+    <script src="../static/vendor/cal-heatmap.min.js"></script>
+    <script src="../assets/js/habits.js"></script>
+  </body>
+</html>
