@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const addHabitButton = document.getElementById("add-habit");
   const newHabitNameInput = document.getElementById("new-habit-name");
   const today = new Date().toISOString().split("T")[0];
-  const heatmapInstances = {}; // Store CalHeatmap instances
+  let heatmapInstances = {}; // Store CalHeatmap instances
 
   // --- Data Functions ---
   const saveData = (data) => {
@@ -58,6 +58,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initialize CalHeatmap for this habit
     const cal = new CalHeatmap();
     heatmapInstances[habitName] = cal; // Store instance
+    const data = checkins.map((acc, date) => {
+      return {date: acc, value: 1};
+    })
 
     cal.paint({
       itemSelector: `#cal-${habitId}`,
@@ -65,11 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
       domain: { type: "month" },
       subDomain: { type: "day", radius: 2 },
       data: {
-        source: checkins.reduce((acc, date) => {
-          // CalHeatmap expects timestamps in seconds
-          acc[Date.parse(date) / 1000] = 1; // Use 1 as value for now
-          return acc;
-        }, {}),
+        source: data,
         x: "date", // Assuming 'date' is the timestamp key
         y: "value", // Assuming 'value' is the count key
         // type: "json", // Not needed when providing data directly
@@ -177,16 +176,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Heatmap Update ---
   const updateHeatmap = (habitName, checkins) => {
     const cal = heatmapInstances[habitName];
-    if (cal) {
-      const heatmapData = checkins.reduce((acc, date) => {
-        acc[Date.parse(date) / 1000] = 1;
-        return acc;
-      }, {});
-      cal.update(heatmapData);
-      console.log(`Heatmap updated for ${habitName}`);
-    } else {
+    if (!cal) {
       console.error(`Heatmap instance not found for ${habitName}`);
+      return;
     }
+    const heatmapData = checkins.map((acc, date) => {
+      return {date: acc, value: 1};
+    });
+    cal.fill(heatmapData);
+    console.log(`Heatmap updated for ${habitName}`);
   };
 
   // --- Initialization ---
