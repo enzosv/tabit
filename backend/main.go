@@ -17,6 +17,25 @@ const (
 	serverPort = "8080"
 )
 
+type HTTPError struct {
+	Code    int    // HTTP status code
+	Message string // Error message
+	Err     error  // Underlying error (optional)
+}
+
+// Error satisfies the error interface
+func (e *HTTPError) Error() string {
+	if e.Err != nil {
+		return fmt.Sprintf("HTTP error %d: %s: %v", e.Code, e.Message, e.Err)
+	}
+	return fmt.Sprintf("HTTP error %d: %s", e.Code, e.Message)
+}
+
+// Unwrap allows errors.Is and errors.As to work with wrapped errors
+func (e *HTTPError) Unwrap() error {
+	return e.Err
+}
+
 // Request and response types
 type CreateUserRequest struct {
 	UserID   string `json:"userId"`
@@ -34,7 +53,7 @@ type LogHabitRequest struct {
 }
 
 type Response struct {
-	Message string      `json:"message"`
+	Message string      `json:"message,omitempty"`
 	Data    interface{} `json:"data,omitempty"`
 }
 
@@ -46,7 +65,10 @@ func main() {
 	}
 	defer db.Close()
 
-	// TODO: Set up HTTP handlers
+	// Set up HTTP handlers
+	http.HandleFunc("/api/signup", handleUsers(db))
+	http.HandleFunc("/api/habits", handleHabits(db))
+	// http.HandleFunc("/api/habits/:id/log", handleHabitLogs)
 
 	// Start server
 	log.Printf("Starting server on port %s", serverPort)
@@ -94,6 +116,61 @@ func initDB() (*sql.DB, error) {
 	return db, nil
 }
 
+// Handler for user-related endpoints
+func handleUsers(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		var req CreateUserRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			sendErrorResponse(w, "Invalid request format", http.StatusBadRequest)
+			return
+		}
+		user, err := createUser(r.Context(), db, req)
+		if err != nil {
+			sendErrorResponse(w, err.Message, err.Code)
+			return
+		}
+		sendSuccessResponse(w, user)
+	}
+}
+
+// Handler for habit-related endpoints
+func handleHabits(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			var req CreateHabitRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				sendErrorResponse(w, "Invalid request format", http.StatusBadRequest)
+				return
+			}
+			habit, err := createHabit(r.Context(), db, req)
+			if err != nil {
+				sendErrorResponse(w, err.Message, err.Code)
+				return
+			}
+			sendSuccessResponse(w, habit)
+		// case http.MethodGet:
+		// 	getHabits(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}
+}
+
+// Handler for habit logging
+func handleHabitLogs(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	// case http.MethodPost:
+	// 	logHabit(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 func sendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
@@ -102,10 +179,9 @@ func sendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 	})
 }
 
-func sendSuccessResponse(w http.ResponseWriter, message string, data interface{}) {
+func sendSuccessResponse(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(Response{
-		Message: message,
-		Data:    data,
+		Data: data,
 	})
 }
