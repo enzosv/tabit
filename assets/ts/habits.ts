@@ -196,6 +196,11 @@ function enhanceHabit(habitName: string, allHabits: Record<string, string[]>) {
   });
 
   cal.on("click", (event, timestamp, value) => {
+    const now = new Date();
+    if (timestamp > now) {
+      // can't select future days
+      timestamp = now;
+    }
     day = new Date(timestamp).toISOString().split("T")[0];
     if (logButton) {
       logButton.innerHTML = `Log ${day}`;
