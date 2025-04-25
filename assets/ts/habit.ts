@@ -96,21 +96,44 @@ function initializeAndConfigureHeatmap(
   const cal = new CalHeatmap();
   heatmapInstances[habitName] = cal; // Store instance
 
-  cal.paint({
-    itemSelector: heatmapSelector,
-    range: 10,
-    domain: { type: "month" },
-    subDomain: { type: "day", radius: 2 },
-    data: { source: heatmapData, x: "date", y: "value" },
-    date: { start: startDate },
-    scale: {
-      color: {
-        type: "threshold",
-        range: ["#ededed", "#9be9a8", "#40c463", "#30a14e", "#216e39"],
-        domain: [1, 2, 3, 4, 5], // Example scale
+  cal.paint(
+    {
+      itemSelector: heatmapSelector,
+      range: 10,
+      domain: { type: "month" },
+      subDomain: { type: "day", radius: 2 },
+      data: { source: heatmapData, x: "date", y: "value" },
+      date: { start: startDate },
+      scale: {
+        color: {
+          type: "threshold",
+          range: ["#ededed", "#9be9a8", "#40c463", "#30a14e", "#216e39"],
+          domain: [1, 2, 3, 4, 5], // Example scale
+        },
       },
     },
-  });
+    [
+      [
+        Tooltip,
+        {
+          text: function (date, value) {
+            if (!date) {
+              return;
+            }
+            const dateString = new Date(date).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            });
+            if (!value) {
+              return `${dateString}`;
+            }
+
+            return `${dateString} - ${value}`;
+          },
+        },
+      ],
+    ]
+  );
   return cal;
 }
 
