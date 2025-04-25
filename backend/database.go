@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"time"
 
 	. "github.com/go-jet/jet/v2/sqlite"
 
@@ -12,6 +13,32 @@ import (
 	"tabit-serverless/.gen/model"
 	. "tabit-serverless/.gen/table"
 )
+
+func logHabit(ctx context.Context, db *sql.DB, req LogHabitRequest, habitID int32) *HTTPError {
+	if req.UserID == "" || habitID == 0 || req.Day == "" {
+		return &HTTPError{
+			Code:    http.StatusBadRequest,
+			Message: "Missing request params",
+		}
+	}
+	_, err := time.Parse("2006-01-02", req.Day)
+	if err != nil {
+		return &HTTPError{
+			Code:    http.StatusBadRequest,
+			Message: "Date format must be yyyy-mm-dd",
+		}
+	}
+	habitLog := model.HabitLogs{HabitID: habitID, Day: req.Day}
+	stmt := HabitLogs.INSERT(HabitLogs.HabitID, HabitLogs.Day).MODEL(habitLog)
+	_, err = stmt.ExecContext(ctx, db)
+	if err != nil {
+		return &HTTPError{
+			Code:    http.StatusInternalServerError,
+			Message: "Failed to log habit",
+		}
+	}
+	return nil
+}
 
 func createHabit(ctx context.Context, db *sql.DB, req CreateHabitRequest) (*model.Habits, *HTTPError) {
 	if req.UserID == "" || req.Name == "" {

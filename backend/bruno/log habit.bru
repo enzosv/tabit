@@ -1,0 +1,17 @@
+meta {
+  name: log habit
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:8080/api/habits/1/log
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id":"1"
+  }
+}

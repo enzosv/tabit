@@ -7,7 +7,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -48,8 +50,8 @@ type CreateHabitRequest struct {
 }
 
 type LogHabitRequest struct {
-	HabitID int64  `json:"habitId"`
-	Day     string `json:"day"` // Format: YYYY-MM-DD
+	UserID string `json:"user_id"` // TODO: get from auth
+	Day    string `json:"day"`     // Format: YYYY-MM-DD
 }
 
 type Response struct {
@@ -65,14 +67,15 @@ func main() {
 	}
 	defer db.Close()
 
-	// Set up HTTP handlers
-	http.HandleFunc("/api/signup", handleUsers(db))
-	http.HandleFunc("/api/habits", handleHabits(db))
-	// http.HandleFunc("/api/habits/:id/log", handleHabitLogs)
+	r := mux.NewRouter()
 
+	// Set up HTTP handlers
+	r.HandleFunc("/api/signup", handleUsers(db))
+	r.HandleFunc("/api/habits/{id}/log", handleHabitLogs(db))
+	r.HandleFunc("/api/habits", handleHabits(db))
 	// Start server
 	log.Printf("Starting server on port %s", serverPort)
-	if err := http.ListenAndServe(":"+serverPort, nil); err != nil {
+	if err := http.ListenAndServe(":"+serverPort, r); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
@@ -162,12 +165,30 @@ func handleHabits(db *sql.DB) http.HandlerFunc {
 }
 
 // Handler for habit logging
-func handleHabitLogs(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	// case http.MethodPost:
-	// 	logHabit(w, r)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+func handleHabitLogs(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		habitID, err := strconv.ParseInt(vars["id"], 10, 64)
+		if err != nil {
+			sendErrorResponse(w, "habit id must be an int", http.StatusBadRequest)
+			return
+		}
+		switch r.Method {
+		case http.MethodPost:
+			var req LogHabitRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				sendErrorResponse(w, "Invalid request format", http.StatusBadRequest)
+				return
+			}
+			err := logHabit(r.Context(), db, req, int32(habitID))
+			if err != nil {
+				sendErrorResponse(w, err.Message, err.Code)
+				return
+			}
+			sendSuccessResponse(w, "ok")
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
 	}
 }
 
