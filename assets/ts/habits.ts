@@ -134,19 +134,27 @@ function enhanceHabit(habitName: string, allHabits: Record<string, string[]>) {
     .querySelector(".delete-habit")
     ?.addEventListener("click", () => deleteHabit(habitName, allHabits));
 
-  const counted = Object.entries(
-    (allHabits[habitName] ?? []).reduce((acc, date) => {
-      acc[date] = (acc[date] || 0) + 1;
-      return acc;
-    }, {})
-  ).map(([date, value]) => ({ date, value }));
+  let earliest = new Date().toISOString().split("T")[0];
+  const counts: Record<string, number> = {};
+  for (const date of allHabits[habitName]) {
+    counts[date] = (counts[date] || 0) + 1;
+
+    if (date < earliest) {
+      earliest = date;
+    }
+  }
+
+  const counted = Object.entries(counts).map(([date, value]) => ({
+    date,
+    value,
+  }));
 
   // const habitInfo = allHabits[habitName];
   const cal = new CalHeatmap();
   heatmapInstances[habitName] = cal;
   cal.paint({
     itemSelector: `#cal-${habitName.replace(/\s+/g, "-").toLowerCase()}`,
-    range: 12,
+    range: 10,
     domain: { type: "month" },
     subDomain: { type: "day", radius: 2 },
     data: {
@@ -154,7 +162,7 @@ function enhanceHabit(habitName: string, allHabits: Record<string, string[]>) {
       x: "date",
       y: "value",
     },
-    date: { start: new Date(new Date().getFullYear(), 0, 1) },
+    date: { start: new Date(earliest) },
     scale: {
       color: {
         type: "threshold",
