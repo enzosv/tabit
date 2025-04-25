@@ -156,8 +156,14 @@ func handleHabits(db *sql.DB) http.HandlerFunc {
 				return
 			}
 			sendSuccessResponse(w, habit)
-		// case http.MethodGet:
-		// 	getHabits(w, r)
+		case http.MethodGet:
+			// TODO: get user_id from auth
+			habits, err := getHabits(r.Context(), db, "1")
+			if err != nil {
+				sendErrorResponse(w, err.Message, err.Code)
+				return
+			}
+			sendSuccessResponse(w, habits)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}

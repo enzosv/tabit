@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -13,6 +14,17 @@ import (
 	"tabit-serverless/.gen/model"
 	. "tabit-serverless/.gen/table"
 )
+
+type HabitInfo struct {
+	HabitID int64
+	Name    string
+	Logs    []HabitLogCount
+}
+
+type HabitLogCount struct {
+	Day   string
+	Count int
+}
 
 func logHabit(ctx context.Context, db *sql.DB, req LogHabitRequest, habitID int32) *HTTPError {
 	if req.UserID == "" || habitID == 0 || req.Day == "" {
@@ -61,21 +73,64 @@ func createHabit(ctx context.Context, db *sql.DB, req CreateHabitRequest) (*mode
 	return &dest, nil
 }
 
-func getHabits(ctx context.Context, db *sql.DB, user_id string) error {
-	stmt := SELECT(Habits.HabitID, Habits.Name).FROM(Habits).WHERE(Habits.UserID.EQ(String(user_id))).ORDER_BY(Habits.CreatedAt)
+func getHabits(ctx context.Context, db *sql.DB, user_id string) ([]HabitInfo, *HTTPError) {
+
+	// 	select habit_id, name, day, count(day)
+	// from habits h
+	// join habit_logs hl using (habit_id)
+	// group by habit_id, day;
+
+	stmt := SELECT(
+		Habits.HabitID, Habits.Name.AS("name"),
+		HabitLogs.Day.AS("day"), COUNT(HabitLogs.Day).AS("count")).
+		FROM(Habits.
+			LEFT_JOIN(HabitLogs,
+				Habits.HabitID.EQ(HabitLogs.HabitID))).
+		WHERE(Habits.UserID.EQ(String(user_id))).
+		GROUP_BY(Habits.HabitID, HabitLogs.Day).
+		ORDER_BY(Habits.CreatedAt)
 
 	var dest []struct {
-		HabitID int64  `json:"habit_id"`
-		Name    string `json:"name"`
+		HabitID int64
+		Name    string
+		Day     string
+		Count   int
 	}
-	err := stmt.QueryContext(ctx, db, dest)
+	err := stmt.QueryContext(ctx, db, &dest)
 	if err != nil {
-		return &HTTPError{
+		return nil, &HTTPError{
 			Code:    http.StatusInternalServerError,
 			Message: "Failed to query habits",
 		}
 	}
-	return nil
+
+	habitMap := make(map[int64]*HabitInfo)
+
+	for _, row := range dest {
+		fmt.Println(row.HabitID, row.Name, row.Day, row.Count)
+		habit, exists := habitMap[row.HabitID]
+		if !exists {
+			habit = &HabitInfo{
+				HabitID: row.HabitID,
+				Name:    row.Name,
+				Logs:    []HabitLogCount{},
+			}
+			habitMap[row.HabitID] = habit
+		}
+
+		if row.Day != "" {
+			habit.Logs = append(habit.Logs, HabitLogCount{
+				Day:   row.Day,
+				Count: row.Count,
+			})
+		}
+	}
+
+	var habitInfos []HabitInfo
+	for _, habit := range habitMap {
+		habitInfos = append(habitInfos, *habit)
+	}
+	return habitInfos, nil
 }
 
 // Create a new user
