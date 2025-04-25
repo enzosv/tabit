@@ -18,11 +18,13 @@ function loadData(): Record<string, string[]> {
 }
 
 // --- Event Handlers ---
-function logHabit(habitName: string, habitData) {
-  const today = new Date().toISOString().split("T")[0];
-
+function logHabit(habitName: string, habitData, day?: string) {
+  if (!day) {
+    day = new Date().toISOString().split("T")[0];
+  }
+  console.log("logging", day);
   const checkins = habitData[habitName] || [];
-  checkins.push(today);
+  checkins.push(day);
   habitData[habitName] = checkins;
   saveData(habitData);
   // renderAllHabits(habitData);
@@ -36,6 +38,21 @@ function undoLog(habitName: string, habitData) {
     return;
   }
   checkins.pop();
+  habitData[habitName] = checkins;
+  saveData(habitData);
+  updateHeatmap(habitName, checkins);
+}
+
+function clearLog(habitName: string, habitData, day?: string) {
+  if (!day) {
+    day = new Date().toISOString().split("T")[0];
+  }
+  console.log("clearing", day);
+  let checkins = habitData[habitName] || [];
+  if (checkins.length < 1) {
+    return;
+  }
+  checkins = checkins.filter((date) => date != day);
   habitData[habitName] = checkins;
   saveData(habitData);
   updateHeatmap(habitName, checkins);
@@ -124,9 +141,15 @@ function enhanceHabit(habitName: string, allHabits: Record<string, string[]>) {
     return;
   }
 
-  root
-    .querySelector(".log-habit")
-    ?.addEventListener("click", () => logHabit(habitName, allHabits));
+  let day: string | undefined;
+  const logButton = root.querySelector(".log-habit");
+  const clearButton = root.querySelector(".clear-log");
+  logButton?.addEventListener("click", () =>
+    logHabit(habitName, allHabits, day)
+  );
+  clearButton?.addEventListener("click", () =>
+    clearLog(habitName, allHabits, day)
+  );
   root
     .querySelector(".undo-log")
     ?.addEventListener("click", () => undoLog(habitName, allHabits));
@@ -171,6 +194,16 @@ function enhanceHabit(habitName: string, allHabits: Record<string, string[]>) {
       },
     },
   });
+
+  cal.on("click", (event, timestamp, value) => {
+    day = new Date(timestamp).toISOString().split("T")[0];
+    if (logButton) {
+      logButton.innerHTML = `Log ${day}`;
+    }
+    if (clearButton) {
+      clearButton.innerHTML = `Clear ${day}`;
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -189,7 +222,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Initialization ---
   addHabitButton.addEventListener("click", () => {
-    // Load data before adding to ensure consistency
     addNewHabit(newHabitNameInput.value.trim(), loadData());
     newHabitNameInput.value = "";
   });
