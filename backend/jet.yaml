@@ -1,0 +1,7 @@
+sqlite:
+  DbName: "tabit"
+  Version: "3"
+  Schema:
+    - Path: "./schema.sql"
+  OutputPath: "./db"
+  PackageName: "db"
