@@ -38,12 +38,12 @@ func (e *HTTPError) Unwrap() error {
 
 // Request and response types
 type CreateUserRequest struct {
-	UserID   string `json:"userId"`
+	UserID   string `json:"user_id"` // TODO: get from auth
 	Username string `json:"username"`
 }
 
 type CreateHabitRequest struct {
-	UserID string `json:"userId"`
+	UserID string `json:"user_id"` // TODO: get from auth
 	Name   string `json:"name"`
 }
 
