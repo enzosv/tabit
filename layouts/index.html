@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Habit Tracker</title>
-    <link rel="stylesheet" href="../static/vendor/bootstrap.min.css" />
-    <link rel="stylesheet" href="../static/vendor/cal-heatmap.css" />
-    <link rel="stylesheet" href="../assets/css/styles.css" />
+    <link rel="stylesheet" href="/vendor/bootstrap.min.css" />
+    <link rel="stylesheet" href="/vendor/cal-heatmap.css" />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
   </head>
   <body class="p-3">
     <div class="container">
@@ -43,10 +43,11 @@
        -->
     </div>
 
-    <script src="../static/vendor/jquery-3.7.1.slim.min.js"></script>
-    <script src="../static/vendor/bootstrap.bundle.min.js"></script>
-    <script src="../static/vendor/d3.v7.min.js"></script>
-    <script src="../static/vendor/cal-heatmap.min.js"></script>
-    <script src="../assets/js/habits.js"></script>
+    <script src="/vendor/jquery-3.7.1.slim.min.js"></script>
+    <script src="/vendor/bootstrap.bundle.min.js"></script>
+    <script src="/vendor/d3.v7.min.js"></script>
+    <script src="/vendor/cal-heatmap.min.js"></script>
+    {{ $js := resources.Get "../assets/ts/habits.ts" | js.Build }}
+    <script src="{{ $js.Permalink }}" defer></script>
   </body>
 </html>
