@@ -6,11 +6,12 @@
     <title>Habit Tracker</title>
     <link rel="stylesheet" href="/vendor/bootstrap.min.css" />
     <link rel="stylesheet" href="/vendor/cal-heatmap.css" />
-    <link rel="stylesheet" href="/assets/css/styles.css" />
+    {{ $style := resources.Get "css/styles.css" }}
+    <link rel="stylesheet" href="{{ $style.Permalink }}" />
   </head>
   <body class="p-3">
     <div class="container">
-      <h1 class="mb-4">🧠 Habit Tracker</h1>
+      <h1 class="mb-4">Tabit: Habit Tracker</h1>
 
       <!-- Section to add new habits -->
       <div class="input-group mb-4">
@@ -22,25 +23,14 @@
           aria-label="New habit name"
         />
         <button class="btn btn-outline-secondary" type="button" id="add-habit">
-          Add Habit
+          Add
         </button>
       </div>
 
-      <!-- Container for dynamically added habits -->
       <div id="habits-container">
         <!-- Habit sections will be added here by JS -->
       </div>
-
-      <!-- Removed old buttons and single calendar -->
-      <!--
-      <div id="habit-calendar"></div>
-      <button id="add-checkin" class="btn btn-primary mt-4">
-        ✅ Mark Today
-      </button>
-      <button id="sync-to-cloud" class="btn btn-secondary mt-2">
-        ☁️ Sync to Cloud
-      </button>
-       -->
+      {{ partial "habit.html" }}
     </div>
 
     <script src="/vendor/jquery-3.7.1.slim.min.js"></script>
