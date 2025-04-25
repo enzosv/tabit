@@ -4,7 +4,8 @@
 - Main purpose is to learn [hugo](https://github.com/gohugoio/hugo) and [go-jet](https://github.com/go-jet/jet)
 
 ## Features
-1. [Cal-Heatmap](https://cal-heatmap.com) per habit
+- Local first. Fast and works offline.
+- [Cal-Heatmap](https://cal-heatmap.com) per habit
 
 # TODO
 - Go API for accounts and sync
