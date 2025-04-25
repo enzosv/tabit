@@ -37,7 +37,7 @@
     <script src="/vendor/bootstrap.bundle.min.js"></script>
     <script src="/vendor/d3.v7.min.js"></script>
     <script src="/vendor/cal-heatmap.min.js"></script>
-    {{ $js := resources.Get "../assets/ts/habits.ts" | js.Build }}
+    {{ $js := resources.Get "../assets/ts/main.ts" | js.Build }}
     <script src="{{ $js.Permalink }}" defer></script>
   </body>
 </html>
