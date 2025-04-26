@@ -30,7 +30,7 @@ function updateDayLabel(label: HTMLElement | null, date: Date) {
 }
 
 // --- Event Handlers ---
-function logHabit(habitName: string, habitData: HabitData, date?: Date) {
+export function logHabit(habitName: string, habitData: HabitData, date?: Date) {
   const day = getDateKey(date);
   if (!habitData[habitName][day]) {
     habitData[habitName][day] = 0;

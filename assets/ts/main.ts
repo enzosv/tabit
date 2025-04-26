@@ -1,4 +1,4 @@
-import { HabitData, setupHabit } from "./habit.ts";
+import { HabitData, logHabit, setupHabit } from "./habit.ts";
 import { authToken, setupSession } from "./auth.ts";
 import { sync } from "./sync.ts";
 const HABIT_STORAGE_KEY = "habitData";
@@ -18,7 +18,7 @@ function debounce<F extends (...args: any[]) => any>(
   };
 }
 
-function filterHabits(searchText: string, habitData: HabitData) {
+function filterHabits(searchText: string) {
   const searchWords = searchText.toLowerCase().trim().split(/\s+/);
   if (!searchText.trim()) {
     // Show all habits if search is empty
@@ -77,8 +77,8 @@ function addNewHabit(habitName: string, habitData: HabitData) {
     return;
   }
   if (habitData[habitName]) {
-    alert("Habit already exists!"); // Or provide other feedback
-    // TODO: add log
+    // add log
+    logHabit(habitName, habitData);
     return;
   }
 }
@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Add debounced search handler
   const debouncedSearch = debounce((searchText: string) => {
-    filterHabits(searchText, loadData());
+    filterHabits(searchText);
   }, 180);
 
   newHabitNameInput.addEventListener("input", (e) => {
@@ -143,6 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
   addHabitButton.addEventListener("click", () => {
     addNewHabit(newHabitNameInput.value.trim(), loadData());
     newHabitNameInput.value = "";
+    filterHabits("");
   });
 
   newHabitNameInput.addEventListener("keypress", (e) => {
@@ -151,5 +152,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     addNewHabit(newHabitNameInput.value.trim(), loadData());
     newHabitNameInput.value = "";
+    filterHabits("");
   });
 });
