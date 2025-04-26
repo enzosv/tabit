@@ -1,4 +1,3 @@
-<!-- This is a hidden template to clone via JS -->
 <template id="habit-template">
   <div class="habit-section mb-5 border p-3 rounded" data-habit-name="">
     <div class="d-flex justify-content-between">
@@ -6,12 +5,14 @@
       <button class="btn btn-danger btn-sm delete-habit mb-3">Delete</button>
     </div>
     <div class="heatmap mb-3"></div>
-    <div class="d-flex align-items-center">
-      <button class="btn btn-warning clear-log me-3">-1</button>
-      <button class="btn btn-outline-secondary previous-day">◀</button>
-      <h5 class="day-label px-1">Today</h5>
-      <button class="btn btn-outline-secondary next-day me-3">▶</button>
-      <button class="btn btn-success log-habit me-2">+1</button>
+    <div class="d-flex justify-content-between align-items-center">
+      <button class="btn btn-warning clear-log btn-lg">-1</button>
+      <div class="d-flex align-items-center justify-content-center flex-grow-1">
+        <button class="btn btn-outline-secondary previous-day">◀</button>
+        <h5 class="day-label px-3 m-0">Today</h5>
+        <button class="btn btn-outline-secondary next-day">▶</button>
+      </div>
+      <button class="btn btn-success log-habit btn-lg">+1</button>
     </div>
   </div>
 </template>
