@@ -67,8 +67,8 @@ export function renderAllHabits(habitData: HabitData) {
   });
 }
 document.addEventListener("DOMContentLoaded", () => {
-  login("enzosv@duck.com", "password").then(() => {
-    console.log("logged in");
+  login("enzosv@duck.com", "password").then((token) => {
+    console.log(token);
   });
   const addHabitButton = document.getElementById("add-habit");
   if (!addHabitButton) {
