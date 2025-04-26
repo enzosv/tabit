@@ -8,12 +8,24 @@
 - [Cal-Heatmap](https://cal-heatmap.com) per habit
 
 # TODO
-- Go API for accounts and sync
-  - in netlify functions
-  - use an SQLite [netlify integration](https://www.netlify.com/integrations/database-and-backend/) for persistence
-  - use [go-jet](https://github.com/go-jet/jet) to interact with database
-- Chrome extension
-- Search and add using same text input
-  - Add if new
-  - Log if existing
-  - Shortcut to activate text input
+- [ ] Go API for accounts and sync
+  - [ ] in netlify functions
+  - [ ] use an SQLite [netlify integration](https://www.netlify.com/integrations/database-and-backend/) for persistence
+  - [ ] use [go-jet](https://github.com/go-jet/jet) to interact with database
+  - [ ] accounts
+    - [x] bulk sync
+    - [ ] forgot password
+    - [ ] apple signin
+- [ ] Chrome extension
+- [ ] Search and add using same text input
+  - [x] Add if new
+  - [x] Log if existing
+  - [ ] Shortcut to activate text input
+- [ ] edit mode
+  - [ ] rename
+  - [ ] change colors
+  - [ ] reorder
+- [ ] import
+- [ ] export
+- [ ] dark/light mode toggle
+
