@@ -25,7 +25,7 @@ function clearLog(habitName: string, habitData: HabitData, day?: string) {
   if (!day) {
     day = new Date().toISOString().split("T")[0];
   }
-  habitData[habitName][day] = 0;
+  habitData[habitName][day]--;
   saveData(habitData);
   updateHeatmap(habitName, habitData[habitName]);
 }
@@ -138,27 +138,24 @@ function setupHabitEventListeners(
 // --- Heatmap Interaction ---
 function setupHeatmapClickHandler(
   cal: CalHeatmap,
-  logButton: HTMLButtonElement | null,
-  clearButton: HTMLButtonElement | null,
+  dayLabel: HTMLElement | null,
   onDaySelect: (day: string) => void // Callback when a day is selected
 ) {
   cal.on("click", (_, timestamp) => {
     const now = new Date();
     if (timestamp > now) {
+      // prevent selecting future
       return;
     }
-    // Ensure selected date is not in the future
-    const clickedDate = new Date(timestamp);
-    const day = clickedDate.toISOString().split("T")[0];
+    const day = new Date(timestamp).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
 
-    onDaySelect(day); // Inform the caller (enhanceHabit)
+    onDaySelect(day);
 
-    // Update UI feedback (button text)
-    if (logButton) {
-      logButton.textContent = `Log ${day}`;
-    }
-    if (clearButton) {
-      clearButton.textContent = `Clear ${day}`;
+    if (dayLabel) {
+      dayLabel.textContent = day;
     }
   });
 }
@@ -187,9 +184,8 @@ export function setupHabit(habitName: string, allHabits: HabitData) {
   setupHabitEventListeners(root, habitName, allHabits, () => selectedDay);
 
   // 4. Setup heatmap click interaction (updates selectedDay via callback)
-  const logButton = root.querySelector<HTMLButtonElement>(".log-habit");
-  const clearButton = root.querySelector<HTMLButtonElement>(".clear-log");
-  setupHeatmapClickHandler(cal, logButton, clearButton, (day) => {
+  const dayLabel = root.querySelector<HTMLButtonElement>(".day-label");
+  setupHeatmapClickHandler(cal, dayLabel, (day) => {
     selectedDay = day; // Update state when a day is clicked
   });
 }
