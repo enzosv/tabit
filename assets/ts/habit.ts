@@ -1,5 +1,5 @@
 // import { CalHeatmap } from "..//vendor/cal-heatmap.min.js";
-import { saveData, renderAllHabits, heatmapInstances } from "./main";
+import { saveData, renderAllHabits, heatmapInstances } from "./main.ts";
 
 // --- Event Handlers ---
 function logHabit(habitName: string, habitData, day?: string) {

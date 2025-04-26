@@ -1,5 +1,5 @@
-import { setupHabit } from "./habit";
-import { login } from "./auth";
+import { setupHabit } from "./habit.ts";
+import { login } from "./auth.ts";
 const HABIT_STORAGE_KEY = "habitData";
 
 export let heatmapInstances = {}; // Store CalHeatmap instances
@@ -95,6 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     // Add with Enter key
     addNewHabit(newHabitNameInput.value.trim(), loadData());
+    newHabitNameInput.value = "";
   });
 
   // Load initial data and render

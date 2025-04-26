@@ -43,7 +43,19 @@
       import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       window.supabase = createClient("{{ getenv "SUPABASE_URL" }}", "{{ getenv "SUPABASE_ANON_KEY" }}");
     </script>
-    {{ $js := resources.Get "ts/main.ts" | js.Build }}
-    <script src="{{ $js.Permalink }}" defer></script>
+    {{ if hugo.IsServer }}
+    <!-- Development mode: Use esbuild's live reload -->
+    <script type="module" src="http://localhost:8001/js/main.js"></script>
+    <script type="module">
+      // Simple live reload client
+      new EventSource("http://localhost:8001/esbuild").addEventListener(
+        "change",
+        () => location.reload()
+      );
+    </script>
+    {{ else }}
+    <!-- Production mode: Use bundled JS -->
+    <script type="module" src="/js/main.js"></script>
+    {{ end }}
   </body>
 </html>

@@ -9,3 +9,9 @@ disableKinds = ["taxonomy", "term", "RSS", "sitemap"]
 [security]
   [security.funcs]
     getenv = ["^SUPABASE_"]
+
+[server]
+  [[server.headers]]
+    for = "/**"
+    [server.headers.values]
+      Access-Control-Allow-Origin = "*"
