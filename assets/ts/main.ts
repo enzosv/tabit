@@ -24,6 +24,7 @@ function filterHabits(searchText: string, habitData: HabitData) {
     // Show all habits if search is empty
     document.querySelectorAll(".habit-section").forEach((el) => {
       (el as HTMLElement).style.display = "block";
+      (el as HTMLElement).style.order = "0";
     });
     return;
   }
@@ -37,7 +38,17 @@ function filterHabits(searchText: string, habitData: HabitData) {
       habitName.includes(searchWord)
     );
 
-    (section as HTMLElement).style.display = matches ? "block" : "none";
+    // Check if habit starts with first search word
+    const isPrefixMatch = habitName.startsWith(searchWords[0]);
+
+    if (matches) {
+      (section as HTMLElement).style.display = "block";
+      // Prefix matches appear first (order: 0), other matches after (order: 1)
+      (section as HTMLElement).style.order = isPrefixMatch ? "0" : "1";
+    } else {
+      (section as HTMLElement).style.display = "none";
+      (section as HTMLElement).style.order = "1";
+    }
   });
 }
 
