@@ -5,8 +5,3 @@ body {
 .popover {
   min-width: 300px;
 }
-
-#loginButton .close-text {
-  font-size: 1.5rem;
-  line-height: 1;
-}

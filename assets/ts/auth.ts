@@ -46,13 +46,11 @@ export async function setupSession() {
 
   // Handle button state changes
   $("#loginButton").on("show.bs.popover", function () {
-    $(".login-text").hide();
-    $(".close-text").show();
+    $("#loginButton").text("Close");
   });
 
   $("#loginButton").on("hide.bs.popover", function () {
-    $(".login-text").show();
-    $(".close-text").hide();
+    $("#loginButton").text("Login");
   });
 
   const data = loadData();
