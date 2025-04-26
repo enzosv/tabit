@@ -26,6 +26,7 @@ async function initializeSession() {
     $("#email-label").text(session.user.email ?? "anonymous user");
     return true;
   }
+  console.log("logged out");
   $("#logged-out-content").show();
   $("#logged-in-content").hide();
   return false;
@@ -35,6 +36,24 @@ async function initializeSession() {
 
 export async function setupSession() {
   const isAuthenticated = await initializeSession();
+
+  $("#loginButton").popover({
+    html: true,
+    content: $("#login-popover-template").html(),
+    placement: "bottom",
+    sanitize: false,
+  });
+
+  // Handle button state changes
+  $("#loginButton").on("show.bs.popover", function () {
+    $(".login-text").hide();
+    $(".close-text").show();
+  });
+
+  $("#loginButton").on("hide.bs.popover", function () {
+    $(".login-text").show();
+    $(".close-text").hide();
+  });
 
   const data = loadData();
   if (isAuthenticated) {
@@ -56,10 +75,10 @@ export async function setupSession() {
   }
 
   window.supabase.auth.onAuthStateChange((event, session) => {
-    if (event === "SIGNED_IN") {
+    if (session?.access_token) {
       authToken = session?.access_token ?? null;
       // Update UI for logged in state
-      $("#loginCollapse").collapse("hide");
+      $("#loginButton").popover("hide"); // Hide popover on successful login
       $("#logged-out-content").hide();
       $("#logged-in-content").show();
     } else if (event === "SIGNED_OUT") {
@@ -70,13 +89,12 @@ export async function setupSession() {
     }
   });
 
-  // Modify login form handler
-  $("#login-form").on("submit", async function (e: Event) {
+  $(document).on("submit", "#login-form", async function (e: Event) {
     e.preventDefault();
 
-    const email = $("#email").val() as string;
-    const password = $("#password").val() as string;
-
+    const form = $(e.target);
+    const email = form.find("#email").val() as string;
+    const password = form.find("#password").val() as string;
     try {
       const { data, error } = await tryCatch(
         window.supabase.auth.signInWithPassword({
@@ -85,9 +103,13 @@ export async function setupSession() {
         })
       );
 
-      if (error) throw error;
+      if (error) {
+        console.error("signin error", error);
+        throw error;
+      }
       const session = data.data.session;
       if (!session) {
+        console.error("missing session");
         throw "missing session";
       }
 
@@ -112,7 +134,7 @@ export async function setupSession() {
     authToken = null;
     localStorage.clear();
     window.supabase.auth.signOut().finally(() => {
-      window.location.reload();
+      // window.location.reload();
     });
   });
 }

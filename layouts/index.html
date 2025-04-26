@@ -9,10 +9,12 @@
     {{ $style := resources.Get "css/styles.css" }}
     <link rel="stylesheet" href="{{ $style.Permalink }}" />
   </head>
-  <body class="p-3">
+  <body>
     <div class="container">
-      <h1 class="mb-4">Tabit: Habit Tracker</h1>
-      {{ partial "login.html" }}
+      <div class="d-flex align-items-center justify-content-between">
+        <h1>Tabit: Habit Tracker</h1>
+        <div>{{ partial "login.html" }}</div>
+      </div>
 
       <!-- Section to add new habits -->
       <div class="input-group mb-4">
