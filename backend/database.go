@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"log"
+	"log/slog"
 	"net/http"
-	"time"
 
 	. "github.com/go-jet/jet/v2/sqlite"
 
@@ -26,23 +28,56 @@ type HabitLogCount struct {
 	Count int
 }
 
-func logHabit(ctx context.Context, db *sql.DB, req LogHabitRequest, habitID int32) *HTTPError {
-	if req.UserID == "" || habitID == 0 || req.Day == "" {
-		return &HTTPError{
-			Code:    http.StatusBadRequest,
-			Message: "Missing request params",
-		}
+func syncUserData(ctx context.Context, db *sql.DB, user_id string, req SyncDataRequest) *HTTPError {
+	jsonData, jsonErr := json.Marshal(req.HabitData)
+	if jsonErr != nil {
+		log.Printf("Error marshaling habit data for user %s: %v", user_id, jsonErr)
+		return &HTTPError{Code: http.StatusInternalServerError, Message: "Failed to serialize data", Err: jsonErr}
 	}
-	_, err := time.Parse("2006-01-02", req.Day)
+
+	// Query current timestamp for the user (if exists)
+	var currentTimestamp sql.NullInt64 // Use sql.NullInt64 to handle no existing row
+	stmt := SELECT(UserSyncState.LastUpdatedClient).
+		FROM(UserSyncState).
+		WHERE(UserSyncState.UserID.EQ(String(user_id)))
+	err := stmt.QueryContext(ctx, db, currentTimestamp)
+
+	if err != nil && err != sql.ErrNoRows {
+		log.Printf("Error querying sync state for user %s: %v", user_id, err)
+		return &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state", Err: err}
+	}
+
+	// Compare timestamps (Last Write Wins)
+	// If incoming data is older than existing data, return error
+	if err == nil && currentTimestamp.Valid && req.ClientTimestamp < currentTimestamp.Int64 {
+		slog.Info("Sync skipped", "user", user_id, "incoming", req.ClientTimestamp, "current", currentTimestamp.Int64)
+		return &HTTPError{Code: http.StatusConflict, Message: "Sync skipped"}
+	}
+
+	model := model.UserSyncState{UserID: &user_id, Data: string(jsonData), LastUpdatedClient: int32(req.ClientTimestamp)}
+
+	// Perform UPSERT
+	upsert := UserSyncState.INSERT(UserSyncState.UserID, UserSyncState.Data, UserSyncState.LastUpdatedClient).
+		MODEL(model).
+		ON_CONFLICT(UserSyncState.UserID).
+		DO_UPDATE(
+			SET(UserSyncState.Data.SET(UserSyncState.EXCLUDED.Data),
+				UserSyncState.LastUpdatedClient.SET(UserSyncState.EXCLUDED.LastUpdatedClient),
+			),
+		)
+
+	_, err = upsert.ExecContext(ctx, db)
 	if err != nil {
-		return &HTTPError{
-			Code:    http.StatusBadRequest,
-			Message: "Date format must be yyyy-mm-dd",
-		}
+		slog.ErrorContext(ctx, "Error upserting sync state", "user", user_id, "err", err)
+		return &HTTPError{Code: http.StatusInternalServerError, Message: "Failed to save sync state", Err: err}
 	}
+	return nil
+}
+
+func logHabit(ctx context.Context, db *sql.DB, req LogHabitRequest, habitID int32) *HTTPError {
 	habitLog := model.HabitLogs{HabitID: habitID, Day: req.Day}
 	stmt := HabitLogs.INSERT(HabitLogs.HabitID, HabitLogs.Day).MODEL(habitLog)
-	_, err = stmt.ExecContext(ctx, db)
+	_, err := stmt.ExecContext(ctx, db)
 	if err != nil {
 		return &HTTPError{
 			Code:    http.StatusInternalServerError,
@@ -53,12 +88,6 @@ func logHabit(ctx context.Context, db *sql.DB, req LogHabitRequest, habitID int3
 }
 
 func createHabit(ctx context.Context, db *sql.DB, req CreateHabitRequest) (*model.Habits, *HTTPError) {
-	if req.UserID == "" || req.Name == "" {
-		return nil, &HTTPError{
-			Code:    http.StatusBadRequest,
-			Message: "user_id and name are required",
-		}
-	}
 	habit := model.Habits{UserID: req.UserID, Name: req.Name}
 	stmt := Habits.INSERT(Habits.UserID, Habits.Name).MODEL(habit).RETURNING(Habits.AllColumns)
 
@@ -135,13 +164,6 @@ func getHabits(ctx context.Context, db *sql.DB, user_id string) ([]HabitInfo, *H
 
 // Create a new user
 func createUser(ctx context.Context, db *sql.DB, req CreateUserRequest) (*model.Users, *HTTPError) {
-	if req.UserID == "" || req.Username == "" {
-		return nil, &HTTPError{
-			Code:    http.StatusBadRequest,
-			Message: "UserID and Username are required",
-		}
-	}
-
 	user := model.Users{UserID: &req.UserID, Username: req.Username}
 
 	stmt := Users.INSERT(Users.UserID, Users.Username).MODEL(user).RETURNING(Users.AllColumns)

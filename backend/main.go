@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
@@ -52,6 +53,12 @@ type CreateHabitRequest struct {
 type LogHabitRequest struct {
 	UserID string `json:"user_id"` // TODO: get from auth
 	Day    string `json:"day"`     // Format: YYYY-MM-DD
+	Count  string `json:"count"`
+}
+
+type SyncDataRequest struct {
+	ClientTimestamp int64                     `json:"client_timestamp"` // Unix milliseconds UTC
+	HabitData       map[string]map[string]int `json:"habit_data"`
 }
 
 type Response struct {
@@ -73,6 +80,7 @@ func main() {
 	r.HandleFunc("/api/signup", handleUsers(db))
 	r.HandleFunc("/api/habits/{id}/log", handleHabitLogs(db))
 	r.HandleFunc("/api/habits", handleHabits(db))
+	r.HandleFunc("/api/sync", handleSync(db))
 	// Start server
 	log.Printf("Starting server on port %s", serverPort)
 	if err := http.ListenAndServe(":"+serverPort, r); err != nil {
@@ -112,6 +120,8 @@ func initDB() (*sql.DB, error) {
 	// Execute schema
 	_, err = db.Exec(string(schemaBytes))
 	if err != nil {
+		db.Close()
+		os.Remove(dbName)
 		return nil, fmt.Errorf("failed to execute schema: %w", err)
 	}
 	log.Println("Database schema initialized successfully")
@@ -131,6 +141,10 @@ func handleUsers(db *sql.DB) http.HandlerFunc {
 			sendErrorResponse(w, "Invalid request format", http.StatusBadRequest)
 			return
 		}
+		if req.UserID == "" || req.Username == "" {
+			sendErrorResponse(w, "UserID and Username are required", http.StatusBadRequest)
+			return
+		}
 		user, err := createUser(r.Context(), db, req)
 		if err != nil {
 			sendErrorResponse(w, err.Message, err.Code)
@@ -148,6 +162,10 @@ func handleHabits(db *sql.DB) http.HandlerFunc {
 			var req CreateHabitRequest
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				sendErrorResponse(w, "Invalid request format", http.StatusBadRequest)
+				return
+			}
+			if req.UserID == "" || req.Name == "" {
+				sendErrorResponse(w, "user_id and name are required", http.StatusBadRequest)
 				return
 			}
 			habit, err := createHabit(r.Context(), db, req)
@@ -186,9 +204,18 @@ func handleHabitLogs(db *sql.DB) http.HandlerFunc {
 				sendErrorResponse(w, "Invalid request format", http.StatusBadRequest)
 				return
 			}
-			err := logHabit(r.Context(), db, req, int32(habitID))
+			if req.UserID == "" || habitID == 0 || req.Day == "" {
+				sendErrorResponse(w, "Missing request params", http.StatusBadRequest)
+				return
+			}
+			_, err := time.Parse("2006-01-02", req.Day)
 			if err != nil {
-				sendErrorResponse(w, err.Message, err.Code)
+				sendErrorResponse(w, "Date format must be yyyy-mm-dd", http.StatusBadRequest)
+				return
+			}
+			db_err := logHabit(r.Context(), db, req, int32(habitID))
+			if db_err != nil {
+				sendErrorResponse(w, db_err.Message, db_err.Code)
 				return
 			}
 			sendSuccessResponse(w, "ok")
@@ -211,4 +238,35 @@ func sendSuccessResponse(w http.ResponseWriter, data interface{}) {
 	json.NewEncoder(w).Encode(Response{
 		Data: data,
 	})
+}
+
+// Handler for synchronizing the entire user state
+func handleSync(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var req SyncDataRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			sendErrorResponse(w, "Invalid request format: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Basic validation
+		if req.ClientTimestamp == 0 || req.HabitData == nil {
+			sendErrorResponse(w, "Missing required fields: user_id, client_timestamp, habit_data", http.StatusBadRequest)
+			return
+		}
+
+		// TODO: hardcoded user ID with actual auth user ID
+		err := syncUserData(r.Context(), db, "1", req)
+		if err != nil {
+			sendErrorResponse(w, err.Message, err.Code)
+			return
+		}
+
+		sendSuccessResponse(w, "Data synchronized successfully")
+	}
 }
