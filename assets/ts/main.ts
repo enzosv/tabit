@@ -5,7 +5,7 @@ const HABIT_STORAGE_KEY = "habitData";
 export let heatmapInstances = {}; // Store CalHeatmap instances
 
 // --- Data Functions ---
-export function saveData(data: any) {
+export function saveData(data: HabitData) {
   try {
     localStorage.setItem(HABIT_STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
@@ -21,7 +21,6 @@ function loadData(): HabitData {
 
 // --- Event Handlers ---
 function addNewHabit(habitName: string, habitData: HabitData) {
-  console.log(habitData);
   if (habitName && !habitData[habitName]) {
     habitData[habitName] = {};
     saveData(habitData);

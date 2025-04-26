@@ -1,4 +1,3 @@
-// import { CalHeatmap } from "..//vendor/cal-heatmap.min.js";
 import { saveData, renderAllHabits, heatmapInstances } from "./main.ts";
 
 interface HabitLogs {
@@ -143,7 +142,7 @@ function setupHeatmapClickHandler(
   clearButton: HTMLButtonElement | null,
   onDaySelect: (day: string) => void // Callback when a day is selected
 ) {
-  cal.on("click", (event, timestamp, value) => {
+  cal.on("click", (_, timestamp) => {
     const now = new Date();
     if (timestamp > now) {
       return;
