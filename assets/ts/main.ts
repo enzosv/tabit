@@ -1,5 +1,6 @@
 import { HabitData, setupHabit } from "./habit.ts";
 import { login } from "./auth.ts";
+import { sync } from "./sync.ts";
 const HABIT_STORAGE_KEY = "habitData";
 
 export let heatmapInstances = {}; // Store CalHeatmap instances
@@ -67,8 +68,9 @@ export function renderAllHabits(habitData: HabitData) {
   });
 }
 document.addEventListener("DOMContentLoaded", () => {
+  const data = loadData();
   login("enzosv@duck.com", "password").then((token) => {
-    console.log(token);
+    sync(token, data).then((result) => console.log(result));
   });
   const addHabitButton = document.getElementById("add-habit");
   if (!addHabitButton) {
@@ -99,5 +101,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Load initial data and render
-  renderAllHabits(loadData());
+  renderAllHabits(data);
 });
