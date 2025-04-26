@@ -1,0 +1,19 @@
+meta {
+  name: sync
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://localhost:8080/api/sync
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "user_id":"1",
+    "client_timestamp":1,
+    "habit_data": {"a":{"2025-01-01":1}}
+  }
+}

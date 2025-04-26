@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -67,6 +68,10 @@ type Response struct {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Failed to load env: %v", err)
+	}
 	// Initialize database
 	db, err := initDB()
 	if err != nil {
@@ -84,7 +89,7 @@ func main() {
 	// Start server
 	log.Printf("Starting server on port %s", serverPort)
 	if err := http.ListenAndServe(":"+serverPort, r); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		log.Panicf("Failed to start server: %v", err)
 	}
 }
 
@@ -254,16 +259,22 @@ func handleSync(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Basic validation
 		if req.ClientTimestamp == 0 || req.HabitData == nil {
 			sendErrorResponse(w, "Missing required fields: user_id, client_timestamp, habit_data", http.StatusBadRequest)
 			return
 		}
 
-		// TODO: hardcoded user ID with actual auth user ID
-		err := syncUserData(r.Context(), db, "1", req)
+		token, err := parseAndVerifyToken(r.Header.Get("Authorization"))
 		if err != nil {
-			sendErrorResponse(w, err.Message, err.Code)
+			sendErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		fmt.Println(token)
+
+		// TODO: hardcoded user ID with actual auth user ID
+		db_err := syncUserData(r.Context(), db, "1", req)
+		if db_err != nil {
+			sendErrorResponse(w, db_err.Message, db_err.Code)
 			return
 		}
 
