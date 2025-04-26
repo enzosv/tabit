@@ -9,9 +9,7 @@ export let heatmapInstances = {}; // Store CalHeatmap instances
 export function saveData(data: HabitData) {
   try {
     localStorage.setItem(HABIT_STORAGE_KEY, JSON.stringify(data));
-    sync(authToken, data, new Date().getTime()).then((result) =>
-      console.log(result)
-    );
+    sync(authToken, data, new Date().getTime());
   } catch (error) {
     console.error("Error saving data to localStorage:", error);
     // TODO: Add user feedback about storage quota exceeded or other errors
@@ -70,7 +68,7 @@ export function renderAllHabits(habitData: HabitData) {
     setupHabit(habitName, habitData);
   });
 }
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   setupSession();
 
   const addHabitButton = document.getElementById("add-habit");

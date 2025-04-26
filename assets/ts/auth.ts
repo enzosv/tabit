@@ -1,3 +1,6 @@
+/// <reference path="./types/jquery.d.ts" />
+/// <reference path="./types/window.d.ts" />
+
 import { saveData } from "./main.ts";
 import { loadData, renderAllHabits } from "./main.ts";
 import { sync } from "./sync.ts";
@@ -9,7 +12,6 @@ async function initializeSession() {
     data: { session },
     error,
   } = await window.supabase.auth.getSession();
-
   if (error) {
     console.error("Error checking session:", error);
     return false;
@@ -18,21 +20,12 @@ async function initializeSession() {
   if (session) {
     // User is already logged in
     authToken = session.access_token;
-    return true;
-  }
-  // If no session, try to refresh it
-  const {
-    data: { session: refreshedSession },
-  } = await window.supabase.auth.refreshSession();
-
-  if (refreshedSession) {
-    authToken = refreshedSession.access_token;
-    // Update UI for logged in state
     $(".logged-out-content").hide();
     $(".logged-in-content").show();
     return true;
   }
-
+  $(".logged-out-content").show();
+  $(".logged-in-content").hide();
   return false;
 }
 
