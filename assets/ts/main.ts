@@ -5,6 +5,42 @@ const HABIT_STORAGE_KEY = "habitData";
 
 export let heatmapInstances: Record<string, CalHeatmap> = {}; // Store CalHeatmap instances
 
+// Add these functions before the DOMContentLoaded event listener
+
+function debounce<F extends (...args: any[]) => any>(
+  func: F,
+  waitFor: number
+): (...args: Parameters<F>) => void {
+  let timeout: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<F>): void => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), waitFor);
+  };
+}
+
+function filterHabits(searchText: string, habitData: HabitData) {
+  const searchWords = searchText.toLowerCase().trim().split(/\s+/);
+  if (!searchText.trim()) {
+    // Show all habits if search is empty
+    document.querySelectorAll(".habit-section").forEach((el) => {
+      (el as HTMLElement).style.display = "block";
+    });
+    return;
+  }
+
+  document.querySelectorAll(".habit-section").forEach((section) => {
+    const habitName =
+      section.getAttribute("data-habit-name")?.toLowerCase() || "";
+
+    // Check if ALL search words are found in the habit name
+    const matches = searchWords.every((searchWord) =>
+      habitName.includes(searchWord)
+    );
+
+    (section as HTMLElement).style.display = matches ? "block" : "none";
+  });
+}
+
 // --- Data Functions ---
 export function saveData(data: HabitData) {
   try {
@@ -73,19 +109,26 @@ document.addEventListener("DOMContentLoaded", () => {
   setupSession();
 
   const addHabitButton = document.getElementById("add-habit");
-  if (!addHabitButton) {
-    console.error("add button could not be found");
-    return;
-  }
   const newHabitNameInput = document.getElementById(
     "new-habit-name"
   ) as HTMLInputElement;
-  if (!newHabitNameInput) {
-    console.error("input could not be found");
+
+  if (!addHabitButton || !newHabitNameInput) {
+    console.error("Required elements could not be found");
     return;
   }
 
-  // --- Initialization ---
+  // Add debounced search handler
+  const debouncedSearch = debounce((searchText: string) => {
+    filterHabits(searchText, loadData());
+  }, 180);
+
+  newHabitNameInput.addEventListener("input", (e) => {
+    const target = e.target as HTMLInputElement;
+    debouncedSearch(target.value);
+  });
+
+  // Existing event listeners
   addHabitButton.addEventListener("click", () => {
     addNewHabit(newHabitNameInput.value.trim(), loadData());
     newHabitNameInput.value = "";
@@ -95,7 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key != "Enter") {
       return;
     }
-    // Add with Enter key
     addNewHabit(newHabitNameInput.value.trim(), loadData());
     newHabitNameInput.value = "";
   });
