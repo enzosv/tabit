@@ -1,4 +1,4 @@
-import { setupHabit } from "./habit.ts";
+import { HabitData, setupHabit } from "./habit.ts";
 import { login } from "./auth.ts";
 const HABIT_STORAGE_KEY = "habitData";
 
@@ -14,15 +14,16 @@ export function saveData(data: any) {
   }
 }
 
-function loadData(): Record<string, string[]> {
+function loadData(): HabitData {
   const storedData = localStorage.getItem(HABIT_STORAGE_KEY);
-  return storedData ? JSON.parse(storedData) : ({} as Record<string, string[]>);
+  return storedData ? JSON.parse(storedData) : ({} as HabitData);
 }
 
 // --- Event Handlers ---
-function addNewHabit(habitName: string, habitData) {
+function addNewHabit(habitName: string, habitData: HabitData) {
+  console.log(habitData);
   if (habitName && !habitData[habitName]) {
-    habitData[habitName] = []; // Initialize with empty checkins
+    habitData[habitName] = {};
     saveData(habitData);
     renderAllHabits(habitData);
     return;
@@ -36,7 +37,7 @@ function addNewHabit(habitName: string, habitData) {
 
 // --- Rendering Functions ---
 
-export function renderAllHabits(habitData: Record<string, string[]>) {
+export function renderAllHabits(habitData: HabitData) {
   const habitsContainer = document.getElementById("habits-container");
   const template = document.getElementById(
     "habit-template"

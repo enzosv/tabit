@@ -1,48 +1,37 @@
 // import { CalHeatmap } from "..//vendor/cal-heatmap.min.js";
 import { saveData, renderAllHabits, heatmapInstances } from "./main.ts";
 
+interface HabitLogs {
+  [date: string]: number;
+}
+
+export interface HabitData {
+  [habitName: string]: HabitLogs;
+}
+
 // --- Event Handlers ---
-function logHabit(habitName: string, habitData, day?: string) {
+function logHabit(habitName: string, habitData: HabitData, day?: string) {
   if (!day) {
     day = new Date().toISOString().split("T")[0];
   }
-  console.log("logging", day);
-  const checkins = habitData[habitName] || [];
-  checkins.push(day);
-  habitData[habitName] = checkins;
-  saveData(habitData);
-  // renderAllHabits(habitData);
-  updateHeatmap(habitName, checkins);
-}
-
-function undoLog(habitName: string, habitData) {
-  console.log(`Undoing last log for: ${habitName}`);
-  const checkins = habitData[habitName] || [];
-  if (checkins.length < 1) {
-    return;
+  if (!habitData[habitName][day]) {
+    habitData[habitName][day] = 0;
   }
-  checkins.pop();
-  habitData[habitName] = checkins;
+  habitData[habitName][day]++;
   saveData(habitData);
-  updateHeatmap(habitName, checkins);
+  updateHeatmap(habitName, habitData[habitName]);
 }
 
-function clearLog(habitName: string, habitData, day?: string) {
+function clearLog(habitName: string, habitData: HabitData, day?: string) {
   if (!day) {
     day = new Date().toISOString().split("T")[0];
   }
-  console.log("clearing", day);
-  let checkins = habitData[habitName] || [];
-  if (checkins.length < 1) {
-    return;
-  }
-  checkins = checkins.filter((date) => date != day);
-  habitData[habitName] = checkins;
+  habitData[habitName][day] = 0;
   saveData(habitData);
-  updateHeatmap(habitName, checkins);
+  updateHeatmap(habitName, habitData[habitName]);
 }
 
-function deleteHabit(habitName: string, habitData) {
+function deleteHabit(habitName: string, habitData: HabitData) {
   console.log(`Deleting habit: ${habitName}`);
   // Optional: Add a confirmation dialog
   // if (!confirm(`Are you sure you want to delete the habit "${habitName}"? This cannot be undone.`)) {
@@ -56,45 +45,33 @@ function deleteHabit(habitName: string, habitData) {
 }
 
 // --- Heatmap Update ---
-function updateHeatmap(habitName: string, checkins: string[]) {
+function updateHeatmap(habitName: string, logs: HabitLogs) {
   const cal = heatmapInstances[habitName];
   if (!cal) {
     console.error(`Heatmap instance not found for ${habitName}`);
     return;
   }
-  const { counted } = prepareHeatmapData(checkins);
-  cal.fill(counted);
-}
-
-// --- Data Preparation ---
-function prepareHeatmapData(checkins: string[]): {
-  counted: { date: string; value: number }[];
-  earliest: string;
-} {
-  let earliest = new Date().toISOString().split("T")[0];
-  const counts: Record<string, number> = {};
-  for (const date of checkins) {
-    counts[date] = (counts[date] || 0) + 1;
-    if (date < earliest) {
-      earliest = date;
-    }
-  }
-  const counted = Object.entries(counts).map(([date, value]) => ({
+  const data = Object.entries(logs).map(([date, value]) => ({
     date,
     value,
   }));
-  return { counted, earliest };
+  cal.fill(data);
 }
 
 // --- Heatmap Initialization ---
 function initializeAndConfigureHeatmap(
   habitName: string,
   heatmapSelector: string,
-  heatmapData: { date: string; value: number }[],
+  logs: HabitLogs,
   startDate: Date
 ): CalHeatmap {
   const cal = new CalHeatmap();
   heatmapInstances[habitName] = cal; // Store instance
+
+  const data = Object.entries(logs).map(([date, value]) => ({
+    date,
+    value,
+  }));
 
   cal.paint(
     {
@@ -102,7 +79,7 @@ function initializeAndConfigureHeatmap(
       range: 10,
       domain: { type: "month" },
       subDomain: { type: "day", radius: 2 },
-      data: { source: heatmapData, x: "date", y: "value" },
+      data: { source: data, x: "date", y: "value" },
       date: { start: startDate },
       scale: {
         color: {
@@ -141,7 +118,7 @@ function initializeAndConfigureHeatmap(
 function setupHabitEventListeners(
   root: Element,
   habitName: string,
-  allHabits: Record<string, string[]>,
+  allHabits: HabitData,
   getSelectedDay: () => string | undefined // Function to get the selected day
 ) {
   root
@@ -154,9 +131,6 @@ function setupHabitEventListeners(
     ?.addEventListener("click", () =>
       clearLog(habitName, allHabits, getSelectedDay())
     );
-  root
-    .querySelector(".undo-log")
-    ?.addEventListener("click", () => undoLog(habitName, allHabits));
   root
     .querySelector(".delete-habit")
     ?.addEventListener("click", () => deleteHabit(habitName, allHabits));
@@ -190,10 +164,7 @@ function setupHeatmapClickHandler(
   });
 }
 
-export function setupHabit(
-  habitName: string,
-  allHabits: Record<string, string[]>
-) {
+export function setupHabit(habitName: string, allHabits: HabitData) {
   const root = document.querySelector(`[data-habit-name="${habitName}"]`);
   if (!root) {
     console.error(`Habit section for "${habitName}" not found`);
@@ -202,8 +173,6 @@ export function setupHabit(
 
   let selectedDay: string | undefined; // State variable for the selected day
 
-  const { counted, earliest } = prepareHeatmapData(allHabits[habitName]);
-
   // 2. Initialize heatmap
   const heatmapSelector = `#cal-${habitName
     .replace(/\s+/g, "-")
@@ -211,8 +180,8 @@ export function setupHabit(
   const cal = initializeAndConfigureHeatmap(
     habitName,
     heatmapSelector,
-    counted,
-    new Date(earliest)
+    allHabits[habitName],
+    new Date()
   );
 
   // 3. Setup button listeners (pass getter for selectedDay)
