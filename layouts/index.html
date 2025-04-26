@@ -12,6 +12,7 @@
   <body class="p-3">
     <div class="container">
       <h1 class="mb-4">Tabit: Habit Tracker</h1>
+      {{ partial "login.html" }}
 
       <!-- Section to add new habits -->
       <div class="input-group mb-4">
@@ -41,7 +42,16 @@
     <script src="/vendor/Tooltip.min.js"></script>
     <script type="module">
       import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-      window.supabase = createClient("{{ getenv "SUPABASE_URL" }}", "{{ getenv "SUPABASE_ANON_KEY" }}");
+      window.supabase = createClient(
+        "{{ getenv "SUPABASE_URL" }}",
+        "{{ getenv "SUPABASE_ANON_KEY" }}",
+        {
+          auth: {
+            persistSession: true,
+            storage: window.localStorage
+          }
+        }
+      );
     </script>
     {{ if hugo.IsServer }}
     <!-- Development mode: Use esbuild's live reload -->

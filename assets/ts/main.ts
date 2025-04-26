@@ -1,10 +1,9 @@
 import { HabitData, setupHabit } from "./habit.ts";
-import { login } from "./auth.ts";
+import { authToken, setupSession } from "./auth.ts";
 import { sync } from "./sync.ts";
 const HABIT_STORAGE_KEY = "habitData";
 
 export let heatmapInstances = {}; // Store CalHeatmap instances
-let authToken: string | null = null;
 
 // --- Data Functions ---
 export function saveData(data: HabitData) {
@@ -19,7 +18,7 @@ export function saveData(data: HabitData) {
   }
 }
 
-function loadData(): HabitData {
+export function loadData(): HabitData {
   const storedData = localStorage.getItem(HABIT_STORAGE_KEY);
   return storedData ? JSON.parse(storedData) : ({} as HabitData);
 }
@@ -71,20 +70,9 @@ export function renderAllHabits(habitData: HabitData) {
     setupHabit(habitName, habitData);
   });
 }
-document.addEventListener("DOMContentLoaded", () => {
-  const data = loadData();
-  login("test@enzo.com", "password").then((token) => {
-    authToken = token;
-    sync(token, data, 0)
-      .then((result) => {
-        renderAllHabits(JSON.parse(result.data.Data));
-      })
-      .catch((err) => {
-        console.error(err);
-        // render from localstorage
-        renderAllHabits(data);
-      });
-  });
+document.addEventListener("DOMContentLoaded", async () => {
+  setupSession();
+
   const addHabitButton = document.getElementById("add-habit");
   if (!addHabitButton) {
     console.error("add button could not be found");
