@@ -1,13 +1,17 @@
 import { HabitData } from "./habit.ts";
 
-export async function sync(token: string | null, data: HabitData) {
+export async function sync(
+  token: string | null,
+  data: HabitData,
+  last_update: number
+) {
   if (!token) {
     return;
   }
   try {
     const body = {
       habit_data: data,
-      client_timestamp: new Date().getTime(),
+      client_timestamp: last_update,
     };
     const response = await fetch("http://localhost:8080/api/sync", {
       method: "POST",

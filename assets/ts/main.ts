@@ -10,7 +10,9 @@ let authToken: string | null = null;
 export function saveData(data: HabitData) {
   try {
     localStorage.setItem(HABIT_STORAGE_KEY, JSON.stringify(data));
-    sync(authToken, data).then((result) => console.log(result));
+    sync(authToken, data, new Date().getTime()).then((result) =>
+      console.log(result)
+    );
   } catch (error) {
     console.error("Error saving data to localStorage:", error);
     // TODO: Add user feedback about storage quota exceeded or other errors
@@ -73,6 +75,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const data = loadData();
   login("test@enzo.com", "password").then((token) => {
     authToken = token;
+    sync(token, data, 0)
+      .then((result) => {
+        renderAllHabits(JSON.parse(result.data.Data));
+      })
+      .catch((err) => {
+        console.error(err);
+        // render from localstorage
+        renderAllHabits(data);
+      });
   });
   const addHabitButton = document.getElementById("add-habit");
   if (!addHabitButton) {
@@ -101,7 +112,4 @@ document.addEventListener("DOMContentLoaded", () => {
     addNewHabit(newHabitNameInput.value.trim(), loadData());
     newHabitNameInput.value = "";
   });
-
-  // Load initial data and render
-  renderAllHabits(data);
 });
