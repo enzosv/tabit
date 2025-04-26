@@ -17,7 +17,6 @@ import (
 
 const (
 	dbName     = "tabit.db"
-	schemaPath = "schema.sql"
 	serverPort = "8080"
 )
 
@@ -76,6 +75,21 @@ func main() {
 
 	r := mux.NewRouter()
 
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:1313")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	// Set up HTTP handlers
 	r.HandleFunc("/api/habits/{id}", handleHabitLogs(db))
 	r.HandleFunc("/api/habits", handleHabits(db))
@@ -87,7 +101,6 @@ func main() {
 	}
 }
 
-// Initialize the database from schema.sql
 func initDB() (*sql.DB, error) {
 	// Check if database file exists
 	_, err := os.Stat(dbName)
