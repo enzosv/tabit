@@ -2,16 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>Habit Tracker</title>
     <link rel="stylesheet" href="/vendor/bootstrap.min.css" />
     <link rel="stylesheet" href="/vendor/cal-heatmap.css" />
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
-    <div class="container">
-      <div class="d-flex align-items-center justify-content-between">
-        <h1>Tabit: Habit Tracker</h1>
+    <div class="container px-3">
+      <div
+        class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 my-3"
+      >
+        <h1 class="h4 mb-0">Tabit: Habit Tracker</h1>
         <div>{{ partial "login.html" }}</div>
       </div>
 
@@ -21,15 +29,15 @@
           type="text"
           id="new-habit-name"
           class="form-control"
-          placeholder="Enter new habit name"
+          placeholder="New habit"
           aria-label="New habit name"
         />
-        <button class="btn btn-outline-secondary" type="button" id="add-habit">
+        <button class="btn btn-primary" type="button" id="add-habit">
           Add
         </button>
       </div>
 
-      <div id="habits-container">
+      <div id="habits-container" class="mb-4">
         <!-- Habit sections will be added here by JS -->
       </div>
       {{ partial "habit.html" }}
