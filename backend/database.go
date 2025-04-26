@@ -76,7 +76,10 @@ func syncUserData(ctx context.Context, db *sql.DB, user_id string, req SyncDataR
 
 func logHabit(ctx context.Context, db *sql.DB, req LogHabitRequest, habitID int32) *HTTPError {
 	habitLog := model.HabitLogs{HabitID: habitID, Day: req.Day}
-	stmt := HabitLogs.INSERT(HabitLogs.HabitID, HabitLogs.Day).MODEL(habitLog)
+	stmt := HabitLogs.INSERT(HabitLogs.HabitID, HabitLogs.Day, HabitLogs.Count).
+		MODEL(habitLog).
+		ON_CONFLICT(HabitLogs.HabitID, HabitLogs.Day).
+		DO_UPDATE(SET(HabitLogs.Count.SET(HabitLogs.EXCLUDED.Count)))
 	_, err := stmt.ExecContext(ctx, db)
 	if err != nil {
 		return &HTTPError{

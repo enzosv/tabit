@@ -78,7 +78,7 @@ func main() {
 
 	// Set up HTTP handlers
 	r.HandleFunc("/api/signup", handleUsers(db))
-	r.HandleFunc("/api/habits/{id}/log", handleHabitLogs(db))
+	r.HandleFunc("/api/habits/{id}", handleHabitLogs(db))
 	r.HandleFunc("/api/habits", handleHabits(db))
 	r.HandleFunc("/api/sync", handleSync(db))
 	// Start server
@@ -198,7 +198,7 @@ func handleHabitLogs(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		switch r.Method {
-		case http.MethodPost:
+		case http.MethodPut:
 			var req LogHabitRequest
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				sendErrorResponse(w, "Invalid request format", http.StatusBadRequest)
