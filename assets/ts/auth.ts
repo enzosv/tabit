@@ -132,7 +132,7 @@ export async function setupSession() {
     authToken = null;
     localStorage.clear();
     window.supabase.auth.signOut().finally(() => {
-      // window.location.reload();
+      window.location.reload();
     });
   });
 }
