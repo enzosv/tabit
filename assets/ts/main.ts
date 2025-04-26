@@ -1,4 +1,5 @@
 import { setupHabit } from "./habit";
+import { login } from "./auth";
 const HABIT_STORAGE_KEY = "habitData";
 
 export let heatmapInstances = {}; // Store CalHeatmap instances
@@ -66,6 +67,9 @@ export function renderAllHabits(habitData: Record<string, string[]>) {
   });
 }
 document.addEventListener("DOMContentLoaded", () => {
+  login("enzosv@duck.com", "password").then(() => {
+    console.log("logged in");
+  });
   const addHabitButton = document.getElementById("add-habit");
   if (!addHabitButton) {
     console.error("add button could not be found");
