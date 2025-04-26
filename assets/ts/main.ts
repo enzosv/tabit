@@ -69,6 +69,7 @@ export function renderAllHabits(habitData: HabitData) {
   });
 }
 document.addEventListener("DOMContentLoaded", () => {
+  renderAllHabits(loadData());
   setupSession();
 
   const addHabitButton = document.getElementById("add-habit");
