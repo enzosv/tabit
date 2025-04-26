@@ -21,12 +21,13 @@ async function initializeSession() {
   if (session) {
     // User is already logged in
     authToken = session.access_token;
-    $(".logged-out-content").hide();
-    $(".logged-in-content").show();
+    $("#logged-out-content").hide();
+    $("#logged-in-content").show();
+    $("#email-label").text(session.user.email ?? "anonymous user");
     return true;
   }
-  $(".logged-out-content").show();
-  $(".logged-in-content").hide();
+  $("#logged-out-content").show();
+  $("#logged-in-content").hide();
   return false;
 }
 
@@ -59,13 +60,13 @@ export async function setupSession() {
       authToken = session?.access_token ?? null;
       // Update UI for logged in state
       $("#loginCollapse").collapse("hide");
-      $(".logged-out-content").hide();
-      $(".logged-in-content").show();
+      $("#logged-out-content").hide();
+      $("#logged-in-content").show();
     } else if (event === "SIGNED_OUT") {
       authToken = null;
       // Update UI for logged out state
-      $(".logged-in-content").hide();
-      $(".logged-out-content").show();
+      $("#logged-in-content").hide();
+      $("#logged-out-content").show();
     }
   });
 

@@ -1,41 +1,35 @@
-<div class="logged-out-content">
-  <div class="mb-4">
-    <button
-      class="btn btn-primary"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#loginCollapse"
-      aria-expanded="false"
-      aria-controls="loginCollapse"
-    >
-      Login
-    </button>
-    <div class="collapse mt-3" id="loginCollapse">
-      <div class="card card-body">
-        <form id="login-form" class="needs-validation" novalidate>
-          <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" required />
-          </div>
-          <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input
-              type="password"
-              class="form-control"
-              id="password"
-              required
-            />
-          </div>
-          <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">Login</button>
-          </div>
-        </form>
-      </div>
+<div id="logged-out-content" style="display: none">
+  <button
+    class="btn btn-link"
+    type="button"
+    data-bs-toggle="collapse"
+    data-bs-target="#loginCollapse"
+    aria-expanded="false"
+    aria-controls="loginCollapse"
+  >
+    Login
+  </button>
+  <div class="collapse mt-3" id="loginCollapse">
+    <div class="card card-body">
+      <form id="login-form" class="needs-validation" novalidate>
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" class="form-control" id="email" required />
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" class="form-control" id="password" required />
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-link">Login</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
-<div class="logged-in-content" style="display: none">
+<div id="logged-in-content" style="display: none">
   <!-- User info and logout button -->
-  <button id="logout-button" class="btn btn-outline-danger">Logout</button>
+  <span id="email-label" class="text-muted"></span>
+  <button id="logout-button" class="btn btn-link text-danger">Logout</button>
 </div>
