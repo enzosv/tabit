@@ -1,6 +1,9 @@
 import { HabitData } from "./habit.ts";
 
-export async function sync(token: string, data: HabitData) {
+export async function sync(token: string | null, data: HabitData) {
+  if (!token) {
+    return;
+  }
   try {
     const body = {
       habit_data: data,

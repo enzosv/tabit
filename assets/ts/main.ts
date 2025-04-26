@@ -4,11 +4,13 @@ import { sync } from "./sync.ts";
 const HABIT_STORAGE_KEY = "habitData";
 
 export let heatmapInstances = {}; // Store CalHeatmap instances
+let authToken: string | null = null;
 
 // --- Data Functions ---
 export function saveData(data: HabitData) {
   try {
     localStorage.setItem(HABIT_STORAGE_KEY, JSON.stringify(data));
+    sync(authToken, data).then((result) => console.log(result));
   } catch (error) {
     console.error("Error saving data to localStorage:", error);
     // TODO: Add user feedback about storage quota exceeded or other errors
@@ -70,7 +72,7 @@ export function renderAllHabits(habitData: HabitData) {
 document.addEventListener("DOMContentLoaded", () => {
   const data = loadData();
   login("test@enzo.com", "password").then((token) => {
-    sync(token, data).then((result) => console.log(result));
+    authToken = token;
   });
   const addHabitButton = document.getElementById("add-habit");
   if (!addHabitButton) {
