@@ -1,67 +1,29 @@
 package main
 
 import (
-	"crypto/rsa"
-	"encoding/json"
 	"errors"
-	"net/http"
+	"fmt"
+	"os"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-const jwksURL = "https://<your-project-id>.supabase.co/auth/v1/keys"
-
-type JWKS struct {
-	Keys []JSONWebKey `json:"keys"`
-}
-
-type JSONWebKey struct {
-	Kid string   `json:"kid"`
-	Kty string   `json:"kty"`
-	Alg string   `json:"alg"`
-	Use string   `json:"use"`
-	N   string   `json:"n"`
-	E   string   `json:"e"`
-	X5c []string `json:"x5c"`
-}
-
-func getRSAPublicKeyFromJWKS(kid string) (*rsa.PublicKey, error) {
-	resp, err := http.Get(jwksURL)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var jwks JWKS
-	if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
-		return nil, err
+func parseAndVerifyToken(token_string string) (*string, error) {
+	// Get JWT secret from environment
+	jwtSecret := os.Getenv("SUPABASE_JWT_SECRET")
+	if jwtSecret == "" {
+		return nil, errors.New("JWT_SECRET not found in environment")
 	}
 
-	for _, key := range jwks.Keys {
-		if key.Kid == kid {
-			// Decode the x5c certificate to get the public key
-			cert := "-----BEGIN CERTIFICATE-----\n" + key.X5c[0] + "\n-----END CERTIFICATE-----"
-			parsedKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
-			if err != nil {
-				return nil, err
-			}
-			return parsedKey, nil
+	// Parse and verify the token
+	token, err := jwt.Parse(token_string, func(token *jwt.Token) (interface{}, error) {
+		// Validate signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-	}
+		return []byte(jwtSecret), nil
+	})
 
-	return nil, errors.New("no matching key found")
-}
-
-func parseAndVerifyToken(tokenStr string) (*jwt.Token, error) {
-	keyFunc := func(token *jwt.Token) (interface{}, error) {
-		// Get the kid from header
-		if kid, ok := token.Header["kid"].(string); ok {
-			return getRSAPublicKeyFromJWKS(kid)
-		}
-		return nil, errors.New("kid not found in token header")
-	}
-
-	token, err := jwt.Parse(tokenStr, keyFunc, jwt.WithValidMethods([]string{"RS256"}))
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +31,10 @@ func parseAndVerifyToken(tokenStr string) (*jwt.Token, error) {
 	if !token.Valid {
 		return nil, errors.New("invalid token")
 	}
+	subject, err := token.Claims.GetSubject()
+	if err != nil {
+		return nil, err
+	}
 
-	return token, nil
+	return &subject, nil
 }
