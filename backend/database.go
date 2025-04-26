@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/go-jet/jet/v2/qrm"
 	. "github.com/go-jet/jet/v2/sqlite"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -40,9 +41,9 @@ func syncUserData(ctx context.Context, db *sql.DB, user_id string, req SyncDataR
 	stmt := SELECT(UserSyncState.LastUpdatedClient).
 		FROM(UserSyncState).
 		WHERE(UserSyncState.UserID.EQ(String(user_id)))
-	err := stmt.QueryContext(ctx, db, currentTimestamp)
+	err := stmt.QueryContext(ctx, db, &currentTimestamp)
 
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != qrm.ErrNoRows {
 		log.Printf("Error querying sync state for user %s: %v", user_id, err)
 		return &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state", Err: err}
 	}
