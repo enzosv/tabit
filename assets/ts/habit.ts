@@ -8,11 +8,30 @@ export interface HabitData {
   [habitName: string]: HabitLogs;
 }
 
-// --- Event Handlers ---
-function logHabit(habitName: string, habitData: HabitData, day?: string) {
-  if (!day) {
-    day = new Date().toISOString().split("T")[0];
+function formatDateLabel(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function getDateKey(date?: Date): string {
+  if (!date) {
+    date = new Date();
   }
+  return date.toISOString().split("T")[0];
+}
+
+function updateDayLabel(label: HTMLElement | null, date: Date) {
+  if (!label) {
+    return;
+  }
+  label.textContent = formatDateLabel(date);
+}
+
+// --- Event Handlers ---
+function logHabit(habitName: string, habitData: HabitData, date?: Date) {
+  const day = getDateKey(date);
   if (!habitData[habitName][day]) {
     habitData[habitName][day] = 0;
   }
@@ -21,9 +40,10 @@ function logHabit(habitName: string, habitData: HabitData, day?: string) {
   updateHeatmap(habitName, habitData[habitName]);
 }
 
-function clearLog(habitName: string, habitData: HabitData, day?: string) {
-  if (!day) {
-    day = new Date().toISOString().split("T")[0];
+function clearLog(habitName: string, habitData: HabitData, date?: Date) {
+  const day = getDateKey(date);
+  if (!habitData[habitName][day]) {
+    habitData[habitName][day] = 0;
   }
   habitData[habitName][day]--;
   saveData(habitData);
@@ -96,10 +116,7 @@ function initializeAndConfigureHeatmap(
             if (!date) {
               return;
             }
-            const dateString = new Date(date).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            });
+            const dateString = formatDateLabel(new Date(date));
             if (!value) {
               return `${dateString}`;
             }
@@ -113,13 +130,77 @@ function initializeAndConfigureHeatmap(
   return cal;
 }
 
+export function setupHabit(habitName: string, allHabits: HabitData) {
+  const root = document.querySelector(`[data-habit-name="${habitName}"]`);
+  if (!root) {
+    console.error(`Habit section for "${habitName}" not found`);
+    return;
+  }
+
+  let selectedDay = new Date();
+  // 2. Initialize heatmap
+  const heatmapSelector = `#cal-${habitName
+    .replace(/\s+/g, "-")
+    .toLowerCase()}`;
+  const cal = initializeAndConfigureHeatmap(
+    habitName,
+    heatmapSelector,
+    allHabits[habitName],
+    new Date()
+  );
+
+  const dayLabel = root.querySelector<HTMLButtonElement>(".day-label");
+
+  setupHabitEventListeners(
+    root,
+    habitName,
+    allHabits,
+    () => selectedDay,
+    (date) => {
+      selectedDay = date;
+      updateDayLabel(dayLabel, date);
+    }
+  );
+
+  // 4. Setup heatmap click interaction (updates selectedDay via callback)
+  setupHeatmapClickHandler(cal, (date) => {
+    selectedDay = date; // Update state when a day is clicked
+    updateDayLabel(dayLabel, date);
+  });
+}
+
 // --- Event Listener Setup ---
 function setupHabitEventListeners(
   root: Element,
   habitName: string,
   allHabits: HabitData,
-  getSelectedDay: () => string | undefined // Function to get the selected day
+  getSelectedDay: () => Date,
+  onDaySelect: (day: Date) => void
 ) {
+  $(root)
+    .find(".next-day")
+    .on("click", () => {
+      const currentDate = getSelectedDay();
+      if (
+        currentDate.toISOString().split("T")[0] >=
+        new Date().toISOString().split("T")[0]
+      ) {
+        // prevent future
+        return;
+      }
+
+      const nextDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
+      onDaySelect(nextDate);
+    });
+
+  $(root)
+    .find(".previous-day")
+    .on("click", () => {
+      const currentDate = getSelectedDay();
+      const prevDate = new Date(currentDate.setDate(currentDate.getDate() - 1));
+      onDaySelect(prevDate);
+    });
+
   root
     .querySelector(".log-habit")
     ?.addEventListener("click", () =>
@@ -138,8 +219,7 @@ function setupHabitEventListeners(
 // --- Heatmap Interaction ---
 function setupHeatmapClickHandler(
   cal: CalHeatmap,
-  dayLabel: HTMLElement | null,
-  onDaySelect: (day: string) => void // Callback when a day is selected
+  onDaySelect: (day: Date) => void
 ) {
   cal.on("click", (_, timestamp) => {
     const now = new Date();
@@ -147,45 +227,7 @@ function setupHeatmapClickHandler(
       // prevent selecting future
       return;
     }
-    const day = new Date(timestamp).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
 
-    onDaySelect(day);
-
-    if (dayLabel) {
-      dayLabel.textContent = day;
-    }
-  });
-}
-
-export function setupHabit(habitName: string, allHabits: HabitData) {
-  const root = document.querySelector(`[data-habit-name="${habitName}"]`);
-  if (!root) {
-    console.error(`Habit section for "${habitName}" not found`);
-    return;
-  }
-
-  let selectedDay: string | undefined; // State variable for the selected day
-
-  // 2. Initialize heatmap
-  const heatmapSelector = `#cal-${habitName
-    .replace(/\s+/g, "-")
-    .toLowerCase()}`;
-  const cal = initializeAndConfigureHeatmap(
-    habitName,
-    heatmapSelector,
-    allHabits[habitName],
-    new Date()
-  );
-
-  // 3. Setup button listeners (pass getter for selectedDay)
-  setupHabitEventListeners(root, habitName, allHabits, () => selectedDay);
-
-  // 4. Setup heatmap click interaction (updates selectedDay via callback)
-  const dayLabel = root.querySelector<HTMLButtonElement>(".day-label");
-  setupHeatmapClickHandler(cal, dayLabel, (day) => {
-    selectedDay = day; // Update state when a day is clicked
+    onDaySelect(new Date(timestamp));
   });
 }
