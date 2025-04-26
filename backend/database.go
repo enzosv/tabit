@@ -47,19 +47,19 @@ func syncUserData(ctx context.Context, db *sql.DB, user_id string, req SyncDataR
 		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state", Err: err}
 	}
 
-	if existing.UserID != nil && existing.LastUpdatedClient > int32(req.ClientTimestamp) {
+	if existing.UserID != nil && existing.LastUpdated > int32(req.ClientTimestamp) {
 		return &existing, nil
 	}
 
-	model := model.UserSyncState{UserID: &user_id, Data: string(jsonData), LastUpdatedClient: int32(req.ClientTimestamp)}
+	model := model.UserSyncState{UserID: &user_id, Data: string(jsonData), LastUpdated: int32(req.ClientTimestamp)}
 
 	// Perform UPSERT
-	upsert := UserSyncState.INSERT(UserSyncState.UserID, UserSyncState.Data, UserSyncState.LastUpdatedClient).
+	upsert := UserSyncState.INSERT(UserSyncState.UserID, UserSyncState.Data, UserSyncState.LastUpdated).
 		MODEL(model).
 		ON_CONFLICT(UserSyncState.UserID).
 		DO_UPDATE(
 			SET(UserSyncState.Data.SET(UserSyncState.EXCLUDED.Data),
-				UserSyncState.LastUpdatedClient.SET(UserSyncState.EXCLUDED.LastUpdatedClient),
+				UserSyncState.LastUpdated.SET(UserSyncState.EXCLUDED.LastUpdated),
 			),
 		)
 
