@@ -41,11 +41,6 @@ func (e *HTTPError) Unwrap() error {
 }
 
 // Request and response types
-type CreateUserRequest struct {
-	UserID   string `json:"user_id"` // TODO: get from auth
-	Username string `json:"username"`
-}
-
 type CreateHabitRequest struct {
 	UserID string `json:"user_id"` // TODO: get from auth
 	Name   string `json:"name"`
@@ -82,7 +77,6 @@ func main() {
 	r := mux.NewRouter()
 
 	// Set up HTTP handlers
-	r.HandleFunc("/api/signup", handleUsers(db))
 	r.HandleFunc("/api/habits/{id}", handleHabitLogs(db))
 	r.HandleFunc("/api/habits", handleHabits(db))
 	r.HandleFunc("/api/sync", handleSync(db))
@@ -97,7 +91,9 @@ func main() {
 func initDB() (*sql.DB, error) {
 	// Check if database file exists
 	_, err := os.Stat(dbName)
-	dbExists := !os.IsNotExist(err)
+	if err != nil {
+		return nil, err
+	}
 
 	// Open database connection
 	db, err := sql.Open("sqlite3", dbName)
@@ -109,54 +105,7 @@ func initDB() (*sql.DB, error) {
 	if err = db.Ping(); err != nil {
 		return nil, fmt.Errorf("database ping failed: %w", err)
 	}
-
-	if dbExists {
-		log.Println("Using existing database")
-		return db, nil
-	}
-
-	// If database doesn't exist or we want to reinitialize, load schema
-	// Read schema file
-	schemaBytes, err := os.ReadFile(schemaPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read schema file: %w", err)
-	}
-
-	// Execute schema
-	_, err = db.Exec(string(schemaBytes))
-	if err != nil {
-		db.Close()
-		os.Remove(dbName)
-		return nil, fmt.Errorf("failed to execute schema: %w", err)
-	}
-	log.Println("Database schema initialized successfully")
-
 	return db, nil
-}
-
-// Handler for user-related endpoints
-func handleUsers(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		var req CreateUserRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			sendErrorResponse(w, "Invalid request format", http.StatusBadRequest)
-			return
-		}
-		if req.UserID == "" || req.Username == "" {
-			sendErrorResponse(w, "UserID and Username are required", http.StatusBadRequest)
-			return
-		}
-		user, err := createUser(r.Context(), db, req)
-		if err != nil {
-			sendErrorResponse(w, err.Message, err.Code)
-			return
-		}
-		sendSuccessResponse(w, user)
-	}
 }
 
 // Handler for habit-related endpoints
@@ -264,15 +213,13 @@ func handleSync(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		token, err := parseAndVerifyToken(r.Header.Get("Authorization"))
-		if err != nil {
-			sendErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+		user_id, db_err := userFromToken(r.Context(), db, r.Header.Get("Authorization"))
+		if db_err != nil {
+			sendErrorResponse(w, db_err.Error(), http.StatusUnauthorized)
 			return
 		}
-		fmt.Println(token)
 
-		// TODO: hardcoded user ID with actual auth user ID
-		db_err := syncUserData(r.Context(), db, "1", req)
+		db_err = syncUserData(r.Context(), db, *user_id, req)
 		if db_err != nil {
 			sendErrorResponse(w, db_err.Message, db_err.Code)
 			return

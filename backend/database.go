@@ -167,22 +167,31 @@ func getHabits(ctx context.Context, db *sql.DB, user_id string) ([]HabitInfo, *H
 }
 
 // Create a new user
-func createUser(ctx context.Context, db *sql.DB, req CreateUserRequest) (*model.Users, *HTTPError) {
-	user := model.Users{UserID: &req.UserID, Username: req.Username}
+func createUser(ctx context.Context, db *sql.DB, user_id string) *HTTPError {
+	user := model.Users{UserID: &user_id}
 
-	stmt := Users.INSERT(Users.UserID, Users.Username).MODEL(user).RETURNING(Users.AllColumns)
+	stmt := Users.INSERT(Users.UserID).MODEL(user).ON_CONFLICT().DO_NOTHING()
 
-	dest := model.Users{}
-	err := stmt.QueryContext(ctx, db, dest)
+	_, err := stmt.ExecContext(ctx, db)
 	if err != nil {
-		return nil, &HTTPError{
+		return &HTTPError{
 			Code:    http.StatusInternalServerError,
 			Message: "Failed to create user",
 			Err:     err,
 		}
 	}
+	return nil
+}
 
-	// TODO: login
-	// TODO: return jwt token
-	return &user, nil
+func userFromToken(ctx context.Context, db *sql.DB, token_string string) (*string, *HTTPError) {
+	user_id, err := parseAndVerifyToken(token_string)
+	if err != nil {
+		fmt.Println(err)
+		return nil, &HTTPError{Message: "Unauthorized", Code: http.StatusUnauthorized, Err: err}
+	}
+	db_err := createUser(ctx, db, *user_id)
+	if db_err != nil {
+		return nil, db_err
+	}
+	return user_id, nil
 }

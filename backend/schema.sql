@@ -1,6 +1,5 @@
 CREATE TABLE IF NOT EXISTS users (
     user_id TEXT PRIMARY KEY,
-    username TEXT NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -27,7 +26,7 @@ CREATE TABLE IF NOT EXISTS user_sync_state (
     user_id TEXT PRIMARY KEY,
     data TEXT NOT NULL, -- Store the full HabitData as JSON
     last_updated_client INTEGER NOT NULL, -- Store Unix milliseconds UTC
-    FOREIGN KEY (user_id) REFERENCES users(id) -- Assuming you have a users table with id
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_user_sync_state_last_updated ON user_sync_state (last_updated_client);
