@@ -1,9 +1,10 @@
-/// <reference path="./types/jquery.d.ts" />
-/// <reference path="./types/window.d.ts" />
+import "./types/jquery.d.ts";
+import "./types/window.d.ts";
 
 import { saveData } from "./main.ts";
 import { loadData, renderAllHabits } from "./main.ts";
 import { sync } from "./sync.ts";
+import { tryCatch } from "./try-catch.ts";
 
 export let authToken: string | null = null;
 
@@ -69,24 +70,27 @@ export async function setupSession() {
   });
 
   // Modify login form handler
-  $("#login-form").on("submit", async function (e) {
+  $("#login-form").on("submit", async function (e: Event) {
     e.preventDefault();
 
     const email = $("#email").val() as string;
     const password = $("#password").val() as string;
 
     try {
-      const {
-        data: { session },
-        error,
-      } = await window.supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error } = await tryCatch(
+        window.supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+      );
 
       if (error) throw error;
+      const session = data.data.session;
+      if (!session) {
+        throw "missing session";
+      }
 
-      authToken = session.access_token;
+      authToken = data.data.session.access_token;
       const habits = loadData();
       sync(authToken, habits, 0)
         .then((result) => {
