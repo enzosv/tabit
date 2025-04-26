@@ -221,8 +221,8 @@ func handleSync(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		if req.ClientTimestamp == 0 || req.HabitData == nil {
-			sendErrorResponse(w, "Missing required fields: user_id, client_timestamp, habit_data", http.StatusBadRequest)
+		if req.HabitData == nil {
+			sendErrorResponse(w, "Missing required fields: habit_data", http.StatusBadRequest)
 			return
 		}
 
@@ -232,12 +232,12 @@ func handleSync(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		db_err = syncUserData(r.Context(), db, *user_id, req)
+		data, db_err := syncUserData(r.Context(), db, *user_id, req)
 		if db_err != nil {
 			sendErrorResponse(w, db_err.Message, db_err.Code)
 			return
 		}
 
-		sendSuccessResponse(w, "Data synchronized successfully")
+		sendSuccessResponse(w, data)
 	}
 }

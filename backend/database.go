@@ -29,30 +29,26 @@ type HabitLogCount struct {
 	Count int
 }
 
-func syncUserData(ctx context.Context, db *sql.DB, user_id string, req SyncDataRequest) *HTTPError {
+func syncUserData(ctx context.Context, db *sql.DB, user_id string, req SyncDataRequest) (*model.UserSyncState, *HTTPError) {
 	jsonData, jsonErr := json.Marshal(req.HabitData)
 	if jsonErr != nil {
 		log.Printf("Error marshaling habit data for user %s: %v", user_id, jsonErr)
-		return &HTTPError{Code: http.StatusInternalServerError, Message: "Failed to serialize data", Err: jsonErr}
+		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Failed to serialize data", Err: jsonErr}
 	}
 
-	// Query current timestamp for the user (if exists)
-	var currentTimestamp sql.NullInt64 // Use sql.NullInt64 to handle no existing row
-	stmt := SELECT(UserSyncState.LastUpdatedClient).
+	var existing model.UserSyncState
+	stmt := SELECT(UserSyncState.AllColumns).
 		FROM(UserSyncState).
 		WHERE(UserSyncState.UserID.EQ(String(user_id)))
-	err := stmt.QueryContext(ctx, db, &currentTimestamp)
+	err := stmt.QueryContext(ctx, db, &existing)
 
 	if err != nil && err != qrm.ErrNoRows {
 		log.Printf("Error querying sync state for user %s: %v", user_id, err)
-		return &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state", Err: err}
+		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state", Err: err}
 	}
 
-	// Compare timestamps (Last Write Wins)
-	// If incoming data is older than existing data, return error
-	if err == nil && currentTimestamp.Valid && req.ClientTimestamp < currentTimestamp.Int64 {
-		slog.Info("Sync skipped", "user", user_id, "incoming", req.ClientTimestamp, "current", currentTimestamp.Int64)
-		return &HTTPError{Code: http.StatusConflict, Message: "Sync skipped"}
+	if existing.UserID != nil && existing.LastUpdatedClient > int32(req.ClientTimestamp) {
+		return &existing, nil
 	}
 
 	model := model.UserSyncState{UserID: &user_id, Data: string(jsonData), LastUpdatedClient: int32(req.ClientTimestamp)}
@@ -70,9 +66,9 @@ func syncUserData(ctx context.Context, db *sql.DB, user_id string, req SyncDataR
 	_, err = upsert.ExecContext(ctx, db)
 	if err != nil {
 		slog.ErrorContext(ctx, "Error upserting sync state", "user", user_id, "err", err)
-		return &HTTPError{Code: http.StatusInternalServerError, Message: "Failed to save sync state", Err: err}
+		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Failed to save sync state", Err: err}
 	}
-	return nil
+	return &model, nil
 }
 
 func logHabit(ctx context.Context, db *sql.DB, req LogHabitRequest, habitID int32) *HTTPError {
