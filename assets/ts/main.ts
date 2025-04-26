@@ -3,7 +3,7 @@ import { authToken, setupSession } from "./auth.ts";
 import { sync } from "./sync.ts";
 const HABIT_STORAGE_KEY = "habitData";
 
-export let heatmapInstances = {}; // Store CalHeatmap instances
+export let heatmapInstances: Record<string, CalHeatmap> = {}; // Store CalHeatmap instances
 
 // --- Data Functions ---
 export function saveData(data: HabitData) {
