@@ -1,7 +1,27 @@
 body {
   background-color: #f8f9fa;
+  overflow-x: hidden;
+}
+
+.container,
+.container-fluid {
+  max-width: 600px;
+  padding: 0 1rem;
 }
 
 .popover {
   min-width: 300px;
+}
+.habit-section {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.heatmap-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
