@@ -1,6 +1,28 @@
+:root {
+  --background-color: #121212;
+  --primary-color: #3399ff;
+  --secondary-color: #00c2a8;
+  --success-color: #00d26a;
+  --warning-color: #ffc107;
+  --error-color: #ff5252;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --border-color: #2c2c2c;
+}
+
 body {
-  background-color: #f8f9fa;
+  background-color: var(--background-color);
+  color: var(--text-primary);
   overflow-x: hidden;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-success {
+  background-color: var(--success-color);
 }
 
 .container,

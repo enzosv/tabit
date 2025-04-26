@@ -98,6 +98,7 @@ function initializeAndConfigureHeatmap(
 
   cal.paint(
     {
+      theme: "dark",
       itemSelector: heatmapSelector,
       range: 10,
       domain: { type: "month" },
@@ -105,11 +106,22 @@ function initializeAndConfigureHeatmap(
       data: { source: data, x: "date", y: "value" },
       date: { start: startDate },
       scale: {
+        // color: {
+        //   type: "threshold",
+        //   range: ["#2E333A", "#3399FF", "#00C2A8", "#00D26A", "#00FF9D"],
+        //   domain: [0, 1, 2, 4, 6],
+        // },
         color: {
-          type: "threshold",
-          range: ["#ededed", "#9be9a8", "#40c463", "#30a14e", "#216e39"],
-          domain: [1, 2, 3, 4, 5], // Example scale
+          type: "linear",
+          range: ["#2E333A", "#3399FF"],
+          domain: [0, 6],
+          interpolate: "hsl",
         },
+        // opacity: {
+        //   baseColor: "#3399FF",
+        //   type: "linear",
+        //   domain: [0, 6],
+        // },
       },
     },
     [
