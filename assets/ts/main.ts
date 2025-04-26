@@ -69,7 +69,7 @@ export function renderAllHabits(habitData: HabitData) {
 }
 document.addEventListener("DOMContentLoaded", () => {
   const data = loadData();
-  login("enzosv@duck.com", "password").then((token) => {
+  login("test@enzo.com", "password").then((token) => {
     sync(token, data).then((result) => console.log(result));
   });
   const addHabitButton = document.getElementById("add-habit");
