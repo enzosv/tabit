@@ -18,7 +18,7 @@ const buildOptions: esbuild.BuildOptions = {
 };
 
 // Create a build function
-async function build() {
+async function compileTs() {
   try {
     const start = performance.now();
 
@@ -53,8 +53,42 @@ async function build() {
   }
 }
 
-// Run the build
-await build();
+async function compileCss() {
+  try {
+    const start = performance.now();
+    const entryPoints: string[] = [];
+    for await (const file of Deno.readDir("assets/css/")) {
+      if (file.name.endsWith(".css")) {
+        entryPoints.push(`assets/css/${file.name}`);
+      }
+    }
+    if (entryPoints.length === 0) {
+      console.log("⚠️ No CSS files found in assets/css/");
+      return;
+    }
+    const result = await esbuild.build({
+      entryPoints: entryPoints,
+      bundle: true,
+      outfile: "public/css/styles.css",
+      minify: !DEV_MODE,
+    });
+
+    if (result.errors.length > 0) {
+      console.error("❌ CSS build failed with errors:", result.errors);
+    } else {
+      const duration = (performance.now() - start).toFixed(2);
+      console.log(
+        `✅ CSS bundle completed in ${duration}ms (${entryPoints.length} files)`
+      );
+    }
+  } catch (error) {
+    console.error("❌ CSS build failed:", error);
+    Deno.exit(1);
+  }
+}
+
+// Run the tasks
+await Promise.all([compileTs(), compileCss()]);
 
 // Clean up
 if (!WATCH_MODE) {
