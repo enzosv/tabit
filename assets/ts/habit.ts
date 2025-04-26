@@ -42,6 +42,9 @@ function logHabit(habitName: string, habitData: HabitData, date?: Date) {
 
 function clearLog(habitName: string, habitData: HabitData, date?: Date) {
   const day = getDateKey(date);
+  if (habitData[habitName][day] < 1) {
+    return;
+  }
   if (!habitData[habitName][day]) {
     habitData[habitName][day] = 0;
   }
@@ -51,6 +54,7 @@ function clearLog(habitName: string, habitData: HabitData, date?: Date) {
 }
 
 function deleteHabit(habitName: string, habitData: HabitData) {
+  // TODO: modal to view more info about habit
   console.log(`Deleting habit: ${habitName}`);
   // Optional: Add a confirmation dialog
   // if (!confirm(`Are you sure you want to delete the habit "${habitName}"? This cannot be undone.`)) {
