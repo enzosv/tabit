@@ -16,16 +16,23 @@
     - [x] bulk sync
     - [ ] forgot password
     - [ ] apple signin
+    - [x] email password login
+    - [ ] signup
 - [ ] Chrome extension
 - [ ] Search and add using same text input
   - [x] Add if new
   - [x] Log if existing
   - [ ] Shortcut to activate text input
+  - [x] filter
 - [ ] edit mode
   - [ ] rename
   - [ ] change colors
   - [ ] reorder
-- [ ] import
-- [ ] export
 - [ ] dark/light mode toggle
+- [ ] IAP
+  - [ ] more colors
+  - [ ] multiple habits
+  - [ ] webhooks
+  - [ ] import
+  - [ ] export
 
