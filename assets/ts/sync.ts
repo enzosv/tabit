@@ -13,7 +13,7 @@ export async function sync(
       habit_data: data,
       client_timestamp: last_update,
     };
-    const response = await fetch("http://localhost:8080/api/sync", {
+    const response = await fetch("/api/sync", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

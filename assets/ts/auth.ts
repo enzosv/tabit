@@ -113,7 +113,7 @@ export async function setupSession() {
 
       authToken = data.data.session.access_token;
       const habits = loadData();
-      sync(authToken, habits, 0)
+      sync(authToken, habits, 0) // 0 to not overwrite whats in the database
         .then((result) => {
           renderAllHabits(JSON.parse(result.data.Data));
         })

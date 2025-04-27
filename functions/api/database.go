@@ -27,7 +27,7 @@ type UserSyncStateModel struct {
 // DataStore defines the interface for data storage operations
 type DataStore interface {
 	Close() error
-	SyncUserData(ctx context.Context, user_id string, req SyncDataRequest) (*UserSyncStateModel, *HTTPError)
+	SyncUserData(ctx context.Context, user_id string, last_updated int64, jsonData []byte) (*UserSyncStateModel, *HTTPError)
 	CreateUser(ctx context.Context, user_id string) *HTTPError
 }
 
@@ -98,11 +98,11 @@ func syncUserData(ctx context.Context, db *sql.DB, user_id string, req SyncDataR
 		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state", Err: err}
 	}
 
-	if existing.UserID != nil && existing.LastUpdated > int32(req.ClientTimestamp) {
+	if existing.UserID != nil && existing.LastUpdated > int32(req.LastUpdated) {
 		return &existing, nil
 	}
 
-	model := model.UserSyncState{UserID: &user_id, Data: string(jsonData), LastUpdated: int32(req.ClientTimestamp)}
+	model := model.UserSyncState{UserID: &user_id, Data: string(jsonData), LastUpdated: int32(req.LastUpdated)}
 
 	// Perform UPSERT
 	upsert := UserSyncState.INSERT(UserSyncState.UserID, UserSyncState.Data, UserSyncState.LastUpdated).

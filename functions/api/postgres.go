@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"log/slog"
 	"net/http"
@@ -36,33 +35,41 @@ func (ds *PostgresDataStore) CreateUser(ctx context.Context, user_id string) *HT
 	return nil
 }
 
-func (ds *PostgresDataStore) SyncUserData(ctx context.Context, user_id string, req SyncDataRequest) (*UserSyncStateModel, *HTTPError) {
-	jsonData, jsonErr := json.Marshal(req.HabitData)
-	if jsonErr != nil {
-		log.Printf("Error marshaling habit data for user %s: %v", user_id, jsonErr)
-		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Failed to serialize data", Err: jsonErr}
-	}
+func (ds *PostgresDataStore) SyncUserData(ctx context.Context, user_id string, last_updated int64, jsonData []byte) (*UserSyncStateModel, *HTTPError) {
 
-	var existing UserSyncStateModel
+	var existing model.UserSyncState
 	stmt := SELECT(UserSyncState.AllColumns).
 		FROM(UserSyncState).
-		WHERE(UserSyncState.UserID.EQ(String(user_id)))
-	err := stmt.QueryContext(ctx, ds.DB, &existing)
+		WHERE(UserSyncState.UserID.EQ(Text(user_id)))
+	err := stmt.Query(ds.DB, &existing)
 
 	if err != nil && err != qrm.ErrNoRows {
+		log.Println(stmt.Sql())
+
 		slog.ErrorContext(ctx, "Error querying sync state", "user", user_id, "error", err)
 		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state", Err: err}
 	}
-
-	if existing.LastUpdated > req.ClientTimestamp {
-		return &existing, nil
+	if existing.UserID == "" {
+		log.Println(stmt.Sql())
+		slog.WarnContext(ctx, "existing is likely invalid", "data", existing.Data, "user", existing.UserID)
+		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state"}
 	}
 
-	model := UserSyncStateModel{UserID: user_id, Data: string(jsonData), LastUpdated: req.ClientTimestamp}
+	if existing.LastUpdated > last_updated {
+		slog.InfoContext(ctx, "returning existing", "user", user_id, "last_updated", last_updated)
+		return &UserSyncStateModel{
+			UserID:      existing.UserID,
+			LastUpdated: existing.LastUpdated,
+			Data:        existing.Data,
+		}, nil
+	}
+	slog.InfoContext(ctx, "upserting new time", "user", user_id, "last_updated", last_updated)
+
+	toInsert := UserSyncStateModel{UserID: user_id, Data: string(jsonData), LastUpdated: last_updated}
 
 	// Perform UPSERT
 	upsert := UserSyncState.INSERT(UserSyncState.UserID, UserSyncState.Data, UserSyncState.LastUpdated).
-		MODEL(model).
+		MODEL(toInsert).
 		ON_CONFLICT(UserSyncState.UserID).
 		DO_UPDATE(
 			SET(UserSyncState.Data.SET(UserSyncState.EXCLUDED.Data),
@@ -75,5 +82,13 @@ func (ds *PostgresDataStore) SyncUserData(ctx context.Context, user_id string, r
 		slog.ErrorContext(ctx, "Error upserting sync state", "user", user_id, "err", err)
 		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Failed to save sync state", Err: err}
 	}
-	return &model, nil
+
+	var dest model.UserSyncState
+
+	qins := SELECT(UserSyncState.AllColumns).
+		FROM(UserSyncState)
+	_ = qins.Query(ds.DB, &dest)
+	log.Println(dest, string(jsonData))
+
+	return &toInsert, nil
 }

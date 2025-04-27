@@ -13,7 +13,10 @@
   command = "deno task prod"
 
 [context.deploy-preview]
-  command = "deno task build"
+  command = "deno task prod"
+
+[context.branch-deploy]
+  command = "deno task prod"
 
 [dev]
   command = "deno task dev"
@@ -21,6 +24,7 @@
   port = 8888
   publish = "public"
   autoLaunch = true
+
 
 [functions]
   included_files = []

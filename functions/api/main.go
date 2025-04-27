@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -53,8 +52,8 @@ type LogHabitRequest struct {
 }
 
 type SyncDataRequest struct {
-	ClientTimestamp int64                     `json:"client_timestamp"` // Unix milliseconds UTC
-	HabitData       map[string]map[string]int `json:"habit_data"`
+	LastUpdated int64                     `json:"client_timestamp"` // Unix milliseconds UTC
+	HabitData   map[string]map[string]int `json:"habit_data"`
 }
 
 type Response struct {
@@ -74,6 +73,7 @@ func init() {
 	if connStr == "" {
 		log.Fatal("Database connection string is empty")
 	}
+	fmt.Println("connStr", connStr)
 
 	ds, err := NewDataStore(PostgresDB, connStr)
 	if err != nil {
@@ -91,39 +91,6 @@ func main() {
 
 func newRouter(ds DataStore) *mux.Router {
 	router := mux.NewRouter()
-
-	router.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Check if the origin is allowed
-			origin := r.Header.Get("Origin")
-			allowed := origin == "https://tabits.netlify.app" || strings.HasPrefix(origin, "http://localhost:") || strings.HasPrefix(origin, "--tabits.netlify.app")
-			if !allowed {
-				allowedOrigins := []string{
-					"https://tabits.netlify.app",
-				}
-				for _, allowedOrigin := range allowedOrigins {
-					if origin == allowedOrigin {
-						allowed = true
-						break
-					}
-				}
-			}
-
-			if allowed {
-				w.Header().Set("Access-Control-Allow-Origin", origin)
-				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-				w.Header().Set("Access-Control-Allow-Credentials", "true")
-			}
-
-			if r.Method == "OPTIONS" {
-				w.WriteHeader(http.StatusOK)
-				return
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	})
 
 	router.HandleFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("asfasdfa")
@@ -241,7 +208,14 @@ func handleSync(ds DataStore) http.HandlerFunc {
 			return
 		}
 
-		data, db_err := ds.SyncUserData(r.Context(), *user_id, req)
+		jsonData, jsonErr := json.Marshal(req.HabitData)
+		if jsonErr != nil {
+			slog.ErrorContext(r.Context(), "Error marshaling habit data", "user", user_id, "err", jsonErr)
+			sendErrorResponse(w, "Error decoding habit data", http.StatusInternalServerError)
+			return
+		}
+
+		data, db_err := ds.SyncUserData(r.Context(), *user_id, req.LastUpdated, jsonData)
 		if db_err != nil {
 			sendErrorResponse(w, db_err.Message, db_err.Code)
 			return
