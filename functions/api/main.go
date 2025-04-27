@@ -1,24 +1,24 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/awslabs/aws-lambda-go-api-proxy/core"
+	"github.com/awslabs/aws-lambda-go-api-proxy/gorillamux"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
-)
-
-const (
-	dbName     = "tabit.db"
-	serverPort = "8080"
 )
 
 type HTTPError struct {
@@ -62,31 +62,34 @@ type Response struct {
 	Data    interface{} `json:"data,omitempty"`
 }
 
-func main() {
+var muxLambda *gorillamux.GorillaMuxAdapter
+
+func init() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Failed to load env: %v", err)
+		slog.Warn("Failed to load env", "err", err)
 	}
 	// Initialize database
-	var connStr string
-	pg_url := os.Getenv("PG_URL")
-	if pg_url != "" {
-		connStr = pg_url
-	} else {
-		connStr = fmt.Sprintf(
-			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-			os.Getenv("DB_HOST"),
-			os.Getenv("DB_PORT"),
-			os.Getenv("DB_USER"),
-			os.Getenv("DB_PASSWORD"),
-			os.Getenv("DB_NAME"),
-		)
+	connStr := os.Getenv("PG_URL")
+	if connStr == "" {
+		log.Fatal("Database connection string is empty")
 	}
 
 	ds, err := NewDataStore(PostgresDB, connStr)
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
+
+	// Initialize router
+	router := newRouter(ds)
+	muxLambda = gorillamux.New(router)
+}
+
+func main() {
+	lambda.Start(Handler)
+}
+
+func newRouter(ds DataStore) *mux.Router {
 	router := mux.NewRouter()
 
 	router.Use(func(next http.Handler) http.Handler {
@@ -132,38 +135,12 @@ func main() {
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		sendErrorResponse(w, "not found", http.StatusNotFound)
 	})
-
-	// Start the server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = serverPort
-	}
-
-	log.Printf("Server starting on port %s", port)
-	if err := http.ListenAndServe(":"+port, router); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
-
+	return router
 }
 
-func initDB() (*sql.DB, error) {
-	// Check if database file exists
-	_, err := os.Stat(dbName)
-	if err != nil {
-		return nil, err
-	}
-
-	// Open database connection
-	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-
-	// Test connection
-	if err = db.Ping(); err != nil {
-		return nil, fmt.Errorf("database ping failed: %w", err)
-	}
-	return db, nil
+func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	r, err := muxLambda.ProxyWithContext(ctx, *core.NewSwitchableAPIGatewayRequestV1(&req))
+	return *r.Version1(), err
 }
 
 // Handler for habit-related endpoints
@@ -239,21 +216,6 @@ func handleHabitLogs(ds DataStore) http.HandlerFunc {
 	}
 }
 
-func sendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(Response{
-		Message: message,
-	})
-}
-
-func sendSuccessResponse(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(Response{
-		Data: data,
-	})
-}
-
 // Handler for synchronizing the entire user state
 func handleSync(ds DataStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -287,4 +249,19 @@ func handleSync(ds DataStore) http.HandlerFunc {
 
 		sendSuccessResponse(w, data)
 	}
+}
+
+func sendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(Response{
+		Message: message,
+	})
+}
+
+func sendSuccessResponse(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(Response{
+		Data: data,
+	})
 }
