@@ -8,7 +8,7 @@ disableKinds = ["taxonomy", "term", "RSS", "sitemap"]
   
 [security]
   [security.funcs]
-    getenv = ["^SUPABASE_"]
+    getenv = ["^SUPABASE_", "NETLIFY_DEV"]
 
 [server]
   [[server.headers]]

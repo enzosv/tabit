@@ -1,0 +1,27 @@
+# Netlify configuration file
+
+[build]
+  command = "deno task prod"
+  publish = "public"
+  functions = "backend"
+
+[build.environment]
+  DENO_VERSION = "1.37.1"
+
+[context.production]
+  command = "deno task prod"
+
+[context.deploy-preview]
+  command = "deno task build"
+
+[dev]
+  command = "deno task dev"
+  targetPort = 1313
+  port = 8888
+  publish = "public"
+  autoLaunch = true
+
+[functions]
+  included_files = []
+
+
