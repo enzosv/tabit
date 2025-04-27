@@ -3,10 +3,11 @@
 [build]
   command = "deno task prod"
   publish = "public"
-  functions = "backend"
+  functions = "functions"
 
 [build.environment]
   DENO_VERSION = "1.37.1"
+  GO_VERSION = "1.21"
 
 [context.production]
   command = "deno task prod"
@@ -23,5 +24,10 @@
 
 [functions]
   included_files = []
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
 
 

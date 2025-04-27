@@ -73,9 +73,9 @@ func main() {
 	}
 	defer db.Close()
 
-	r := mux.NewRouter()
+	router := mux.NewRouter()
 
-	r.Use(func(next http.Handler) http.Handler {
+	router.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:1313")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -90,15 +90,28 @@ func main() {
 		})
 	})
 
-	// Set up HTTP handlers
-	r.HandleFunc("/api/habits/{id}", handleHabitLogs(db))
-	r.HandleFunc("/api/habits", handleHabits(db))
-	r.HandleFunc("/api/sync", handleSync(db))
-	// Start server
-	log.Printf("Starting server on port %s", serverPort)
-	if err := http.ListenAndServe(":"+serverPort, r); err != nil {
-		log.Panicf("Failed to start server: %v", err)
+	router.HandleFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("asfasdfa")
+		sendSuccessResponse(w, "pong")
+	})
+	router.HandleFunc("/api/habits/{id}", handleHabitLogs(db))
+	router.HandleFunc("/api/habits", handleHabits(db))
+	router.HandleFunc("/api/sync", handleSync(db))
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		sendErrorResponse(w, "not found", http.StatusNotFound)
+	})
+
+	// Start the server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = serverPort
 	}
+
+	log.Printf("Server starting on port %s", port)
+	if err := http.ListenAndServe(":"+port, router); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
+
 }
 
 func initDB() (*sql.DB, error) {

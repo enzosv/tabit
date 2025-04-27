@@ -3,6 +3,7 @@ module tabit-serverless
 go 1.24.1
 
 require (
+	github.com/aws/aws-lambda-go v1.48.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-jet/jet/v2 v2.13.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
