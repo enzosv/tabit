@@ -56,7 +56,9 @@ function filterHabits(searchText: string) {
 export function saveData(data: HabitData) {
   try {
     localStorage.setItem(HABIT_STORAGE_KEY, JSON.stringify(data));
-    sync(authToken, data, new Date().getTime());
+    debounce(() => {
+      sync(authToken, data, new Date().getTime());
+    }, 300);
   } catch (error) {
     console.error("Error saving data to localStorage:", error);
     // TODO: Add user feedback about storage quota exceeded or other errors
