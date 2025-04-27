@@ -52,13 +52,20 @@ function filterHabits(searchText: string) {
   });
 }
 
+const debouncedSync = debounce(
+  (token: string, habits: HabitData, timestamp: number) => {
+    sync(token, habits, timestamp);
+  },
+  300
+);
+
 // --- Data Functions ---
 export function saveData(data: HabitData) {
   try {
     localStorage.setItem(HABIT_STORAGE_KEY, JSON.stringify(data));
-    debounce(() => {
-      sync(authToken, data, new Date().getTime());
-    }, 300);
+    if (authToken) {
+      debouncedSync(authToken, data, new Date().getTime());
+    }
   } catch (error) {
     console.error("Error saving data to localStorage:", error);
     // TODO: Add user feedback about storage quota exceeded or other errors
@@ -75,6 +82,7 @@ function addNewHabit(habitName: string, habitData: HabitData) {
   if (habitName && !habitData[habitName]) {
     habitData[habitName] = {};
     saveData(habitData);
+    // TODO: post request to /habits
     renderAllHabits(habitData);
     return;
   }
