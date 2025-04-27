@@ -93,10 +93,10 @@ func main() {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Check if the origin is allowed
 			origin := r.Header.Get("Origin")
-			allowed := strings.HasPrefix(origin, "http://localhost:")
+			allowed := origin == "https://tabits.netlify.app" || strings.HasPrefix(origin, "http://localhost:") || strings.HasPrefix(origin, "--tabits.netlify.app")
 			if !allowed {
 				allowedOrigins := []string{
-					"https://tabits.netlify.app", // Replace with your Netlify domain
+					"https://tabits.netlify.app",
 				}
 				for _, allowedOrigin := range allowedOrigins {
 					if origin == allowedOrigin {
