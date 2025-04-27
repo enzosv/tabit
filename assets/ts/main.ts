@@ -54,6 +54,7 @@ function filterHabits(searchText: string) {
 
 const debouncedSync = debounce(
   (token: string, habits: HabitData, timestamp: number) => {
+    console.log("sync");
     sync(token, habits, timestamp);
   },
   300

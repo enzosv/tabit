@@ -10,6 +10,7 @@
   --border-color: #2c2c2c;
 }
 
+html,
 body {
   background-color: var(--background-color);
   color: var(--text-primary);

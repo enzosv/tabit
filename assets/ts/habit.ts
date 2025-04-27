@@ -103,9 +103,9 @@ function initializeAndConfigureHeatmap(
     {
       theme: "dark",
       itemSelector: heatmapSelector,
-      range: 10,
+      range: 12,
       domain: { type: "month" },
-      subDomain: { type: "day", radius: 2 },
+      subDomain: { type: "day", radius: 2, width: 16, height: 16 },
       data: { source: data, x: "date", y: "value" },
       date: { start: startDate },
       scale: {
@@ -117,7 +117,7 @@ function initializeAndConfigureHeatmap(
         color: {
           type: "linear",
           range: ["#2E333A", "#3399FF"],
-          domain: [0, 6],
+          domain: [0, 4],
           interpolate: "hsl",
         },
         // opacity: {
