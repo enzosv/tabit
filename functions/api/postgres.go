@@ -50,7 +50,7 @@ func (ds *PostgresDataStore) SyncUserData(ctx context.Context, user_id string, r
 	err := stmt.QueryContext(ctx, ds.DB, &existing)
 
 	if err != nil && err != qrm.ErrNoRows {
-		log.Printf("Error querying sync state for user %s: %v", user_id, err)
+		slog.ErrorContext(ctx, "Error querying sync state", "user", user_id, "error", err)
 		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state", Err: err}
 	}
 
