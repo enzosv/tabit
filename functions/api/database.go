@@ -18,6 +18,57 @@ import (
 	. "tabit-serverless/.gen/table"
 )
 
+type UserSyncStateModel struct {
+	UserID      string
+	LastUpdated int64
+	Data        string
+}
+
+// DataStore defines the interface for data storage operations
+type DataStore interface {
+	Close() error
+	SyncUserData(ctx context.Context, user_id string, req SyncDataRequest) (*UserSyncStateModel, *HTTPError)
+	CreateUser(ctx context.Context, user_id string) *HTTPError
+}
+
+// DBType represents the supported database types
+type DBType string
+
+const (
+	PostgresDB DBType = "postgres"
+	SQLiteDB   DBType = "sqlite"
+)
+
+// PostgresDataStore implements DataStore for PostgreSQL
+type PostgresDataStore struct {
+	DB *sql.DB
+}
+
+type SQLiteDataStore struct {
+	DB *sql.DB
+}
+
+// NewDataStore creates a new DataStore based on the provided configuration
+func NewDataStore(dbType DBType, connectionString string) (DataStore, error) {
+	db, err := sql.Open(string(dbType), connectionString)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	switch dbType {
+	case PostgresDB:
+		return &PostgresDataStore{DB: db}, nil
+	// case SQLiteDB:
+	// 	return &SQLiteDataStore{DB: db}, nil
+	default:
+		return nil, fmt.Errorf("unsupported database type: %s", dbType)
+	}
+}
+
 type HabitInfo struct {
 	HabitID int64
 	Name    string
@@ -177,17 +228,4 @@ func createUser(ctx context.Context, db *sql.DB, user_id string) *HTTPError {
 		}
 	}
 	return nil
-}
-
-func userFromToken(ctx context.Context, db *sql.DB, token_string string) (*string, *HTTPError) {
-	user_id, err := parseAndVerifyToken(token_string)
-	if err != nil {
-		fmt.Println(err)
-		return nil, &HTTPError{Message: "Unauthorized", Code: http.StatusUnauthorized, Err: err}
-	}
-	db_err := createUser(ctx, db, *user_id)
-	if db_err != nil {
-		return nil, db_err
-	}
-	return user_id, nil
 }

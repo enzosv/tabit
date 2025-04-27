@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -37,4 +39,17 @@ func parseAndVerifyToken(token_string string) (*string, error) {
 	}
 
 	return &subject, nil
+}
+
+func userFromToken(ctx context.Context, ds DataStore, token_string string) (*string, *HTTPError) {
+	user_id, err := parseAndVerifyToken(token_string)
+	if err != nil {
+		fmt.Println(err)
+		return nil, &HTTPError{Message: "Unauthorized", Code: http.StatusUnauthorized, Err: err}
+	}
+	db_err := ds.CreateUser(ctx, *user_id)
+	if db_err != nil {
+		return nil, db_err
+	}
+	return user_id, nil
 }

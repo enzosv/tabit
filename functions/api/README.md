@@ -26,7 +26,7 @@ A simple habit tracking API built with Go, SQLite, and go-jet.
 # Delete the existing database 
 rm tabit.db
 # Regenerate database 
-go run cmd/init/main.go
+go run cmd/init_sqlite/main.go
 # Regenerate models 
 jet -source=sqlite -dsn="./tabit.db" -path=./.gen
 ```

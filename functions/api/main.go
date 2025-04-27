@@ -67,17 +67,29 @@ func main() {
 		log.Fatalf("Failed to load env: %v", err)
 	}
 	// Initialize database
-	db, err := initDB()
+	connStr := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_PORT"),
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_NAME"),
+	)
+	ds, err := NewDataStore(PostgresDB, connStr)
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
-	defer db.Close()
+	defer ds.Close()
 
 	router := mux.NewRouter()
+	fmt.Println("asfasfdasD")
 
 	router.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:1313")
+			// w.Header().Set("Access-Control-Allow-Origin", "http://localhost:1313")
+			origin := r.Header.Get("Origin")
+			fmt.Println("ORIGIN", origin)
+			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
@@ -94,9 +106,9 @@ func main() {
 		fmt.Println("asfasdfa")
 		sendSuccessResponse(w, "pong")
 	})
-	router.HandleFunc("/api/habits/{id}", handleHabitLogs(db))
-	router.HandleFunc("/api/habits", handleHabits(db))
-	router.HandleFunc("/api/sync", handleSync(db))
+	router.HandleFunc("/api/habits/{id}", handleHabitLogs(ds))
+	router.HandleFunc("/api/habits", handleHabits(ds))
+	router.HandleFunc("/api/sync", handleSync(ds))
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		sendErrorResponse(w, "not found", http.StatusNotFound)
 	})
@@ -135,7 +147,7 @@ func initDB() (*sql.DB, error) {
 }
 
 // Handler for habit-related endpoints
-func handleHabits(db *sql.DB) http.HandlerFunc {
+func handleHabits(ds DataStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -148,20 +160,22 @@ func handleHabits(db *sql.DB) http.HandlerFunc {
 				sendErrorResponse(w, "user_id and name are required", http.StatusBadRequest)
 				return
 			}
-			habit, err := createHabit(r.Context(), db, req)
-			if err != nil {
-				sendErrorResponse(w, err.Message, err.Code)
-				return
-			}
-			sendSuccessResponse(w, habit)
+			// habit, err := createHabit(r.Context(), db, req)
+			// if err != nil {
+			// 	sendErrorResponse(w, err.Message, err.Code)
+			// 	return
+			// }
+			// sendSuccessResponse(w, habit)
+			sendSuccessResponse(w, "ok")
 		case http.MethodGet:
 			// TODO: get user_id from auth
-			habits, err := getHabits(r.Context(), db, "1")
-			if err != nil {
-				sendErrorResponse(w, err.Message, err.Code)
-				return
-			}
-			sendSuccessResponse(w, habits)
+			// habits, err := getHabits(r.Context(), ds, "1")
+			// if err != nil {
+			// 	sendErrorResponse(w, err.Message, err.Code)
+			// 	return
+			// }
+			// sendSuccessResponse(w, habits)
+			sendSuccessResponse(w, "ok")
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -169,7 +183,7 @@ func handleHabits(db *sql.DB) http.HandlerFunc {
 }
 
 // Handler for habit logging
-func handleHabitLogs(db *sql.DB) http.HandlerFunc {
+func handleHabitLogs(ds DataStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		habitID, err := strconv.ParseInt(vars["id"], 10, 64)
@@ -193,11 +207,11 @@ func handleHabitLogs(db *sql.DB) http.HandlerFunc {
 				sendErrorResponse(w, "Date format must be yyyy-mm-dd", http.StatusBadRequest)
 				return
 			}
-			db_err := logHabit(r.Context(), db, req, int32(habitID))
-			if db_err != nil {
-				sendErrorResponse(w, db_err.Message, db_err.Code)
-				return
-			}
+			// db_err := logHabit(r.Context(), db, req, int32(habitID))
+			// if db_err != nil {
+			// 	sendErrorResponse(w, db_err.Message, db_err.Code)
+			// 	return
+			// }
 			sendSuccessResponse(w, "ok")
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -221,7 +235,7 @@ func sendSuccessResponse(w http.ResponseWriter, data interface{}) {
 }
 
 // Handler for synchronizing the entire user state
-func handleSync(db *sql.DB) http.HandlerFunc {
+func handleSync(ds DataStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -239,13 +253,13 @@ func handleSync(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		user_id, db_err := userFromToken(r.Context(), db, r.Header.Get("Authorization"))
+		user_id, db_err := userFromToken(r.Context(), ds, r.Header.Get("Authorization"))
 		if db_err != nil {
 			sendErrorResponse(w, db_err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		data, db_err := syncUserData(r.Context(), db, *user_id, req)
+		data, db_err := ds.SyncUserData(r.Context(), *user_id, req)
 		if db_err != nil {
 			sendErrorResponse(w, db_err.Message, db_err.Code)
 			return
