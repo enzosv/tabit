@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -79,19 +80,31 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
-	defer ds.Close()
-
 	router := mux.NewRouter()
-	fmt.Println("asfasfdasD")
 
 	router.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// w.Header().Set("Access-Control-Allow-Origin", "http://localhost:1313")
+			// Check if the origin is allowed
 			origin := r.Header.Get("Origin")
-			fmt.Println("ORIGIN", origin)
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			allowed := strings.HasPrefix(origin, "http://localhost:")
+			if !allowed {
+				allowedOrigins := []string{
+					"https://tabits.netlify.app", // Replace with your Netlify domain
+				}
+				for _, allowedOrigin := range allowedOrigins {
+					if origin == allowedOrigin {
+						allowed = true
+						break
+					}
+				}
+			}
+
+			if allowed {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
+			}
 
 			if r.Method == "OPTIONS" {
 				w.WriteHeader(http.StatusOK)
