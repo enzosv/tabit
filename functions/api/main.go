@@ -68,14 +68,21 @@ func main() {
 		log.Fatalf("Failed to load env: %v", err)
 	}
 	// Initialize database
-	connStr := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-	)
+	var connStr string
+	pg_url := os.Getenv("PG_URL")
+	if pg_url != "" {
+		connStr = pg_url
+	} else {
+		connStr = fmt.Sprintf(
+			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+			os.Getenv("DB_HOST"),
+			os.Getenv("DB_PORT"),
+			os.Getenv("DB_USER"),
+			os.Getenv("DB_PASSWORD"),
+			os.Getenv("DB_NAME"),
+		)
+	}
+
 	ds, err := NewDataStore(PostgresDB, connStr)
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
