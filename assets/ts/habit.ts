@@ -37,6 +37,7 @@ export function logHabit(habitName: string, habitData: HabitData, date?: Date) {
   }
   habitData[habitName][day]++;
   saveData(habitData);
+  // TODO: put request to /habits/id
   updateHeatmap(habitName, habitData[habitName]);
 }
 
@@ -50,6 +51,7 @@ function clearLog(habitName: string, habitData: HabitData, date?: Date) {
   }
   habitData[habitName][day]--;
   saveData(habitData);
+  // TODO: put request to /habits/id
   updateHeatmap(habitName, habitData[habitName]);
 }
 
@@ -64,6 +66,7 @@ function deleteHabit(habitName: string, habitData: HabitData) {
   delete habitData[habitName]; // Remove habit from data object
   delete heatmapInstances[habitName]; // Remove heatmap instance
   saveData(habitData);
+  // TODO: delete request to /habits/id
   renderAllHabits(habitData); // Re-render the UI
 }
 
