@@ -61,10 +61,9 @@
         }
       );
     </script>
-    {{ if or hugo.IsServer (getenv "NETLIFY_DEV") }}
+    {{ if (in .Site.BaseURL "localhost") }}
     <!-- Development mode: Use esbuild's live reload -->
     <script type="module" src="http://localhost:8001/js/main.js"></script>
-    {{ if not (getenv "NETLIFY_DEV") }}
     <script type="module">
       const connectESBuild = () => {
         const es = new EventSource("http://localhost:8001/esbuild");
@@ -76,7 +75,7 @@
       };
       connectESBuild();
     </script>
-    {{ end }} {{ else }}
+    {{ else }}
     <!-- Production mode: Use bundled JS -->
     <script type="module" src="/js/main.js"></script>
     {{ end }}
