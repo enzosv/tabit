@@ -94,24 +94,15 @@ export async function setupSession() {
     const email = form.find("#email").val() as string;
     const password = form.find("#password").val() as string;
     try {
-      const { data, error } = await tryCatch(
-        window.supabase.auth.signInWithPassword({
-          email,
-          password,
-        })
+      const { data: token, error } = await tryCatch(
+        loginOrSignup(email, password)
       );
-
       if (error) {
-        console.error("signin error", error);
+        console.error(error);
         throw error;
       }
-      const session = data.data.session;
-      if (!session) {
-        console.error("missing session");
-        throw "missing session";
-      }
 
-      authToken = data.data.session.access_token;
+      authToken = token;
       const habits = loadData();
       sync(authToken, habits, 0) // 0 to not overwrite whats in the database
         .then((result) => {
@@ -135,4 +126,50 @@ export async function setupSession() {
       window.location.reload();
     });
   });
+}
+
+async function loginOrSignup(email: string, password: string): Promise<string> {
+  const { data, error } = await tryCatch(
+    window.supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+  );
+  if (data && data.data.session) {
+    // login successful
+    return data.data.session.access_token;
+  }
+  if (data.error && data.error.message.includes("Invalid login credentials")) {
+    console.log("User not found, trying to sign up...");
+    // Try sign up
+    const { data, error } = await window.supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (data.session) {
+      // signup successful
+      return data.session.access_token;
+    }
+    if (data.user?.email) {
+      console.log("signup success. logging in");
+      // signup successful but no session. login
+      const { data, error } = await tryCatch(
+        window.supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+      );
+
+      console.log("login", data);
+      if (data && data.data.session) {
+        // login sucessful
+        console.log("login success", data.data.session);
+        return data.data.session.access_token;
+      }
+      console.error("login failure", error);
+      throw error;
+    }
+    throw error;
+  }
+  throw error;
 }
