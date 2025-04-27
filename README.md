@@ -10,8 +10,9 @@
 # TODO
 - [ ] Go API for accounts and sync
   - [ ] in netlify functions
-  - [ ] use an SQLite [netlify integration](https://www.netlify.com/integrations/database-and-backend/) for persistence
+  - [ ] use [Supabase Postgres](https://www.netlify.com/integrations/supabase/) for persistence
   - [ ] use [go-jet](https://github.com/go-jet/jet) to interact with database
+  - [ ] use [golang-migrate](https://github.com/golang-migrate/migrate) for migrations
   - [ ] accounts
     - [x] bulk sync
     - [ ] forgot password
