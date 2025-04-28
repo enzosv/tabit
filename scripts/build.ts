@@ -21,32 +21,20 @@ async function purgeCss(cssContent: string): Promise<string> {
   const results = await new PurgeCSS().purge({
     content: ["layouts/**/*.html", "assets/ts/**/*.ts"],
     css: [{ raw: cssContent }],
-    defaultExtractor: (content: string) => {
-      // Match all class names in HTML class attributes
-      const htmlClasses = content.match(/class="([^"]*)"/) || [];
-
-      // Match all class names in template literals and string concatenations
-      const jsClasses = content.match(/[`'"]\s*[^`'"]*\s*[`'"]/) || [];
-
-      // Combine and clean up the matches
-      const allMatches = [...htmlClasses, ...jsClasses]
-        .map((match) => match.replace(/[`'"]/g, ""))
-        .join(" ")
-        .split(/[\s\n]+/)
-        .filter((cls) => cls.length > 0);
-
-      return allMatches;
-    },
-    // Only safelist critical Bootstrap components that might be added dynamically
+    // safelist critical Bootstrap components that might be added dynamically
     safelist: [
       /^modal/,
       /^popover/,
       /^tooltip/,
       /^dropdown-menu/,
-      /^cal-heatmap/,
-      // Add any dynamically added classes here
+      /^btn-/,
+      /^form-/,
+      "needs-validation",
+      "d-flex",
+      "gap-2",
     ],
   });
+  console.log(results[0]?.css.length);
 
   return results[0]?.css || cssContent;
 }
@@ -56,9 +44,11 @@ async function compileCss() {
     const start = performance.now();
 
     // Combine vendor CSS and custom CSS
-    const vendorCss =
-      (await Deno.readTextFile("static/vendor/bootstrap.min.css")) +
-      (await Deno.readTextFile("static/vendor/cal-heatmap.css"));
+    const vendorCss = await Deno.readTextFile(
+      "static/vendor/bootstrap.min.css"
+    );
+    // not including cal-heatmap because purgecss has too many false positives
+    // (await Deno.readTextFile("static/vendor/cal-heatmap.css"));
 
     // Get custom CSS files
     const customCssFiles: string[] = [];
