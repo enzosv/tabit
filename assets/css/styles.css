@@ -10,7 +10,6 @@
   --border-color: #2c2c2c;
 }
 
-html,
 body {
   background-color: var(--background-color);
   color: var(--text-primary);
@@ -56,4 +55,21 @@ body {
 
 .habit-section {
   order: 0;
+}
+
+.popover {
+  background-color: #212529; /* Dark background */
+  color: #f8f9fa; /* Light text */
+  border: 3px solid var(--border-color);
+}
+
+.popover-header {
+  background-color: #343a40;
+  color: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.popover-body {
+  background-color: #212529;
+  color: #f8f9fa;
 }
