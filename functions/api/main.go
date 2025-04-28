@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -91,6 +92,38 @@ func main() {
 
 func newRouter(ds DataStore) *mux.Router {
 	router := mux.NewRouter()
+	// CORS middleware
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Check if the origin is allowed
+			origin := r.Header.Get("Origin")
+			// TODO: move hardcoded to config
+			allowed := origin == "https://tabits.netlify.app" || strings.HasPrefix(origin, "http://localhost:") || strings.HasSuffix(origin, "--tabits.netlify.app")
+			if !allowed {
+				allowedOrigins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
+				for _, allowedOrigin := range allowedOrigins {
+					if origin == allowedOrigin {
+						allowed = true
+						break
+					}
+				}
+			}
+
+			if allowed {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
+			}
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	})
 
 	router.HandleFunc("/api/ping", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("asfasdfa")
