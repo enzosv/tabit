@@ -34,7 +34,6 @@ async function purgeCss(cssContent: string): Promise<string> {
       "gap-2",
     ],
   });
-  console.log(results[0]?.css.length);
 
   return results[0]?.css || cssContent;
 }
@@ -74,9 +73,9 @@ async function compileCss() {
     let combinedCss = vendorCss + customCss;
 
     // Purge unused CSS in production
-    if (!DEV_MODE) {
-      combinedCss = await purgeCss(combinedCss);
-    }
+    // if (!DEV_MODE) {
+    combinedCss = await purgeCss(combinedCss);
+    // }
 
     // Write final CSS
     await Deno.writeTextFile("public/css/styles.css", combinedCss);
@@ -91,5 +90,41 @@ async function compileCss() {
   }
 }
 
-await Promise.all([esbuild.build(buildOptions), compileCss()]);
-esbuild.stop();
+async function compileTs() {
+  try {
+    const start = performance.now();
+    if (WATCH_MODE) {
+      // Watch mode with live reload support
+      const ctx = await esbuild.context(buildOptions);
+      await ctx.watch();
+      console.log("👀 Watching for changes...");
+
+      // Start live reload server
+      const { host, port } = await ctx.serve({
+        servedir: "public",
+        host: "localhost",
+        port: 8001,
+      });
+
+      console.log(`⚡ Live reload server running at http://${host}:${port}`);
+      return;
+    }
+    // One-time build
+    const result = await esbuild.build(buildOptions);
+
+    if (result.errors.length > 0) {
+      console.error("❌ Build failed with errors:", result.errors);
+    } else {
+      const duration = (performance.now() - start).toFixed(2);
+      console.log(`✅ Build completed in ${duration}ms`);
+    }
+  } catch (error) {
+    console.error("❌ Build failed:", error);
+    Deno.exit(1);
+  }
+}
+
+await Promise.all([compileCss(), compileTs()]);
+if (!WATCH_MODE) {
+  esbuild.stop();
+}
