@@ -49,13 +49,13 @@
       {{ partial "habit.html" }}
     </div>
 
-    <script src="/vendor/jquery-3.7.1.slim.min.js"></script>
-    <script src="/vendor/bootstrap.bundle.min.js"></script>
-    <script src="/vendor/d3.v7.min.js"></script>
-    <script src="/vendor/cal-heatmap.min.js"></script>
-    <script src="/vendor/popper.min.js"></script>
-    <script src="/vendor/Tooltip.min.js"></script>
-    <script type="module">
+    <script defer src="/vendor/jquery-3.7.1.slim.min.js"></script>
+    <script defer src="/vendor/bootstrap.bundle.min.js"></script>
+    <script defer src="/vendor/d3.v7.min.js"></script>
+    <script defer src="/vendor/cal-heatmap.min.js"></script>
+    <script defer src="/vendor/popper.min.js"></script>
+    <script defer src="/vendor/Tooltip.min.js"></script>
+    <script defer type="module">
       import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
       window.supabase = createClient(
         "{{ getenv "SUPABASE_URL" }}",
