@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"slices"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/awslabs/aws-lambda-go-api-proxy/core"
@@ -101,12 +103,7 @@ func newRouter(ds DataStore) *mux.Router {
 			allowed := origin == "https://tabits.netlify.app" || strings.HasPrefix(origin, "http://localhost:") || strings.HasSuffix(origin, "--tabits.netlify.app")
 			if !allowed {
 				allowedOrigins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
-				for _, allowedOrigin := range allowedOrigins {
-					if origin == allowedOrigin {
-						allowed = true
-						break
-					}
-				}
+				allowed = slices.Contains(allowedOrigins, origin)
 			}
 
 			if allowed {
