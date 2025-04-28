@@ -1,6 +1,7 @@
 import { saveData, renderAllHabits, heatmapInstances } from "./main.ts";
+import { updateStreakDisplay } from "./streak.ts";
 
-interface HabitLogs {
+export interface HabitLogs {
   [date: string]: number;
 }
 
@@ -15,7 +16,7 @@ function formatDateLabel(date: Date): string {
   });
 }
 
-function getDateKey(date?: Date): string {
+export function getDateKey(date?: Date): string {
   if (!date) {
     date = new Date();
   }
@@ -39,6 +40,7 @@ export function logHabit(habitName: string, habitData: HabitData, date?: Date) {
   saveData(habitData);
   // TODO: put request to /habits/id
   updateHeatmap(habitName, habitData[habitName]);
+  updateStreakDisplay(habitName, habitData[habitName]); // Add this line
 }
 
 function clearLog(habitName: string, habitData: HabitData, date?: Date) {
@@ -53,6 +55,7 @@ function clearLog(habitName: string, habitData: HabitData, date?: Date) {
   saveData(habitData);
   // TODO: put request to /habits/id
   updateHeatmap(habitName, habitData[habitName]);
+  updateStreakDisplay(habitName, habitData[habitName]); // Add this line
 }
 
 function deleteHabit(habitName: string, habitData: HabitData) {
@@ -186,6 +189,8 @@ export function setupHabit(habitName: string, allHabits: HabitData) {
     selectedDay = date; // Update state when a day is clicked
     updateDayLabel(dayLabel, date);
   });
+
+  updateStreakDisplay(habitName, allHabits[habitName]); // Add this line before setupHabitEventListeners
 }
 
 // --- Event Listener Setup ---
