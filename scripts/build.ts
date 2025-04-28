@@ -1,6 +1,6 @@
 // scripts/build.ts
 import * as esbuild from "https://deno.land/x/esbuild@v0.19.2/mod.js";
-import * as path from "https://deno.land/std@0.203.0/path/mod.ts";
+import { PurgeCSS } from "https://deno.land/x/purgecss@0.1.4/mod.ts";
 
 const WATCH_MODE = Deno.args.includes("--watch");
 const DEV_MODE = Deno.args.includes("--dev") || WATCH_MODE;
@@ -17,80 +17,89 @@ const buildOptions: esbuild.BuildOptions = {
   platform: "browser",
 };
 
-// Create a build function
-async function compileTs() {
-  try {
-    const start = performance.now();
+async function purgeCss(cssContent: string): Promise<string> {
+  const results = await new PurgeCSS().purge({
+    content: ["layouts/**/*.html", "assets/ts/**/*.ts"],
+    css: [{ raw: cssContent }],
+    defaultExtractor: (content: string) => {
+      // Match all class names in HTML class attributes
+      const htmlClasses = content.match(/class="([^"]*)"/) || [];
 
-    if (WATCH_MODE) {
-      // Watch mode with live reload support
-      const ctx = await esbuild.context(buildOptions);
-      await ctx.watch();
-      console.log("👀 Watching for changes...");
+      // Match all class names in template literals and string concatenations
+      const jsClasses = content.match(/[`'"]\s*[^`'"]*\s*[`'"]/) || [];
 
-      // Start live reload server
-      const { host, port } = await ctx.serve({
-        servedir: "public",
-        host: "localhost",
-        port: 8001,
-      });
+      // Combine and clean up the matches
+      const allMatches = [...htmlClasses, ...jsClasses]
+        .map((match) => match.replace(/[`'"]/g, ""))
+        .join(" ")
+        .split(/[\s\n]+/)
+        .filter((cls) => cls.length > 0);
 
-      console.log(`⚡ Live reload server running at http://${host}:${port}`);
-    } else {
-      // One-time build
-      const result = await esbuild.build(buildOptions);
+      return allMatches;
+    },
+    // Only safelist critical Bootstrap components that might be added dynamically
+    safelist: [
+      /^modal/,
+      /^popover/,
+      /^tooltip/,
+      /^dropdown-menu/,
+      /^cal-heatmap/,
+      // Add any dynamically added classes here
+    ],
+  });
 
-      if (result.errors.length > 0) {
-        console.error("❌ Build failed with errors:", result.errors);
-      } else {
-        const duration = (performance.now() - start).toFixed(2);
-        console.log(`✅ Build completed in ${duration}ms`);
-      }
-    }
-  } catch (error) {
-    console.error("❌ Build failed:", error);
-    Deno.exit(1);
-  }
+  return results[0]?.css || cssContent;
 }
 
 async function compileCss() {
   try {
     const start = performance.now();
-    const entryPoints: string[] = [];
+
+    // Combine vendor CSS and custom CSS
+    const vendorCss =
+      (await Deno.readTextFile("static/vendor/bootstrap.min.css")) +
+      (await Deno.readTextFile("static/vendor/cal-heatmap.css"));
+
+    // Get custom CSS files
+    const customCssFiles: string[] = [];
     for await (const file of Deno.readDir("assets/css/")) {
       if (file.name.endsWith(".css")) {
-        entryPoints.push(`assets/css/${file.name}`);
+        customCssFiles.push(`assets/css/${file.name}`);
       }
     }
-    if (entryPoints.length === 0) {
-      console.log("⚠️ No CSS files found in assets/css/");
-      return;
-    }
-    const result = await esbuild.build({
-      entryPoints: entryPoints,
+
+    // Bundle custom CSS
+    const customCssResult = await esbuild.build({
+      entryPoints: customCssFiles,
       bundle: true,
-      outfile: "public/css/styles.css",
+      write: false,
       minify: !DEV_MODE,
     });
 
-    if (result.errors.length > 0) {
-      console.error("❌ CSS build failed with errors:", result.errors);
-    } else {
-      const duration = (performance.now() - start).toFixed(2);
-      console.log(
-        `✅ CSS bundle completed in ${duration}ms (${entryPoints.length} files)`
-      );
+    const customCss = new TextDecoder().decode(
+      customCssResult.outputFiles[0].contents
+    );
+
+    // Combine all CSS
+    let combinedCss = vendorCss + customCss;
+
+    // Purge unused CSS in production
+    if (!DEV_MODE) {
+      combinedCss = await purgeCss(combinedCss);
     }
+
+    // Write final CSS
+    await Deno.writeTextFile("public/css/styles.css", combinedCss);
+
+    const duration = (performance.now() - start).toFixed(2);
+    console.log(`✅ CSS bundle completed in ${duration}ms`);
+
+    return combinedCss;
   } catch (error) {
     console.error("❌ CSS build failed:", error);
-    Deno.exit(1);
+    throw error;
   }
 }
 
-// Run the tasks
-await Promise.all([compileTs(), compileCss()]);
-
-// Clean up
-if (!WATCH_MODE) {
-  esbuild.stop();
-}
+await Promise.all([esbuild.build(buildOptions), compileCss()]);
+esbuild.stop();
