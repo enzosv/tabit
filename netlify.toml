@@ -6,7 +6,7 @@
   functions = "functions"
 
 [build.environment]
-  DENO_VERSION = "1.37.1"
+  DENO_VERSION = "2.1.7"
   GO_VERSION = "1.21"
 
 [dev]
