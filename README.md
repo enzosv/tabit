@@ -34,9 +34,12 @@
   - [ ] import
   - [ ] export
 - Habits
- - [x] streak label
- - [ ] weekly target 🏆
- - [ ] order
- - [ ] color
- - [ ] rename
+  - [x] streak label
+  - [ ] weekly target 🏆
+  - [ ] order
+  - [ ] color
+  - [ ] rename
+- Optimization
+  - [ ] only rerender per habit.html if there is a change
+  - [ ] bundler to remove [unused css](https://github.com/apaleslimghost/postcss-remove-unused)
 
