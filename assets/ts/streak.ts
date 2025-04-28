@@ -14,11 +14,17 @@ function getWeekNumber(date: Date): number {
 }
 
 function calculateStreak(logs: HabitLogs): StreakInfo {
-  if (logs.length === 0) return { type: "none", count: 0 };
-  const dates = Object.keys(logs).sort();
+  const validLogs: HabitLogs = Object.fromEntries(
+    Object.entries(logs).filter(([_, value]) => value > 0)
+  );
+  const keys = Object.keys(validLogs);
+  if (keys.length < 1) {
+    return { type: "none", count: 0 };
+  }
+  const dates = keys.sort();
 
   // check daily streak first
-  const dailyStreak = calculateDailyStreak(logs, dates[0]);
+  const dailyStreak = calculateDailyStreak(validLogs, dates[0]);
   if (dailyStreak > 1) {
     return { type: "day", count: dailyStreak };
   }
