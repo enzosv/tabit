@@ -61,7 +61,10 @@
         }
       );
     </script>
-    {{ if (in .Site.BaseURL "localhost") }}
+    {{ if hugo.IsProduction }}
+    <!-- Production mode: Use bundled JS -->
+    <script type="module" src="/js/main.js"></script>
+    {{ else }}
     <!-- Development mode: Use esbuild's live reload -->
     <script type="module" src="http://localhost:8001/js/main.js"></script>
     <script type="module">
@@ -75,9 +78,6 @@
       };
       connectESBuild();
     </script>
-    {{ else }}
-    <!-- Production mode: Use bundled JS -->
-    <script type="module" src="/js/main.js"></script>
     {{ end }}
   </body>
 </html>

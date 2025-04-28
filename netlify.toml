@@ -9,15 +9,6 @@
   DENO_VERSION = "1.37.1"
   GO_VERSION = "1.21"
 
-[context.production]
-  command = "deno task prod"
-
-[context.deploy-preview]
-  command = "deno task prod"
-
-[context.branch-deploy]
-  command = "deno task prod"
-
 [dev]
   command = "deno task dev"
   targetPort = 1313
@@ -25,7 +16,6 @@
   publish = "public"
   autoLaunch = true
   envFiles = [".env"]
-
 
 [functions]
   included_files = []

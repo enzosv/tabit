@@ -6,6 +6,6 @@
   "tasks": {
     "build": "deno run --allow-read --allow-write --allow-net --allow-env --allow-run scripts/build.ts",
     "dev": "deno run --allow-read --allow-write --allow-net --allow-env --allow-run scripts/build.ts --watch & dotenv hugo server --disableFastRender .",
-    "prod": "deno run --allow-read --allow-write --allow-net --allow-env --allow-run scripts/build.ts && dotenv hugo --minify"
+    "prod": "deno run --allow-read --allow-write --allow-net --allow-env --allow-run scripts/build.ts && HUGO_ENV=production dotenv hugo --minify"
   }
 }
