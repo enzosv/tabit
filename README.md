@@ -9,26 +9,23 @@
 
 # TODO
 - [ ] Go API for accounts and sync
-  - [ ] in netlify functions
-  - [ ] use [Supabase Postgres](https://www.netlify.com/integrations/supabase/) for persistence
-  - [ ] use [go-jet](https://github.com/go-jet/jet) to interact with database
-  - [ ] use [golang-migrate](https://github.com/golang-migrate/migrate) for migrations
+  - [x] in netlify functions
+  - [x] use [Supabase Postgres](https://www.netlify.com/integrations/supabase/) for persistence
+  - [x] use [go-jet](https://github.com/go-jet/jet) to interact with database
+  - [x] use [golang-migrate](https://github.com/golang-migrate/migrate) for migrations
   - [ ] accounts
     - [x] bulk sync
     - [ ] forgot password
     - [ ] apple signin
     - [x] email password login
-    - [ ] signup
+    - [x] signup
+  - [ ] per event api call
 - [ ] Chrome extension
 - [ ] Search and add using same text input
   - [x] Add if new
   - [x] Log if existing
   - [ ] Shortcut to activate text input
   - [x] filter
-- [ ] edit mode
-  - [ ] rename
-  - [ ] change colors
-  - [ ] reorder
 - [ ] dark/light mode toggle
 - [ ] IAP
   - [ ] more colors
@@ -36,4 +33,10 @@
   - [ ] webhooks
   - [ ] import
   - [ ] export
+- Habits
+ - [x] streak label
+ - [ ] weekly target 🏆
+ - [ ] order
+ - [ ] color
+ - [ ] rename
 
