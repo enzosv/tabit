@@ -165,4 +165,11 @@ document.addEventListener("DOMContentLoaded", () => {
     newHabitNameInput.value = "";
     filterHabits("");
   });
+
+  $(document).on("keydown", function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      e.preventDefault();
+      $("#new-habit-name").focus();
+    }
+  });
 });
