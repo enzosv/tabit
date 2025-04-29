@@ -166,6 +166,9 @@ document.addEventListener("DOMContentLoaded", () => {
     filterHabits("");
   });
 
+  // TODO: ctrl-k placeholder for windows
+  // no shortcut for mobile
+
   $(document).on("keydown", function (e) {
     if ((e.metaKey || e.ctrlKey) && e.key === "k") {
       e.preventDefault();
