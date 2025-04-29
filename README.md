@@ -21,10 +21,10 @@
     - [x] signup
   - [ ] per event api call
 - [ ] Chrome extension
-- [ ] Search and add using same text input
+- [x] Search and add using same text input
   - [x] Add if new
   - [x] Log if existing
-  - [ ] Shortcut to activate text input
+  - [x] Shortcut to activate text input
   - [x] filter
 - [ ] dark/light mode toggle
 - [ ] IAP
