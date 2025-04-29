@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="/vendor/cal-heatmap.css" />
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
+
   <body>
     <div class="container">
       <div
@@ -85,5 +86,24 @@
       connectESBuild();
     </script>
     {{ end }}
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("/sw.js").then(
+            function (registration) {
+              // Registration successful
+              console.log(
+                "ServiceWorker registration successful with scope: ",
+                registration.scope
+              );
+            },
+            function (err) {
+              // Registration failed
+              console.log("ServiceWorker registration failed: ", err);
+            }
+          );
+        });
+      }
+    </script>
   </body>
 </html>
