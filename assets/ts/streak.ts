@@ -14,6 +14,10 @@ function getWeekNumber(date: Date): number {
 }
 
 function calculateStreak(logs: HabitLogs): StreakInfo {
+  const today = getDateKey(new Date());
+  if (!logs[today]) {
+    return { type: "none", count: 0 };
+  }
   const validLogs: HabitLogs = Object.fromEntries(
     Object.entries(logs).filter(([_, value]) => value > 0)
   );
