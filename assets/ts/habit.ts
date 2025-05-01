@@ -160,7 +160,9 @@ export function setupHabit(habitName: string, allHabits: HabitData) {
   }
 
   let selectedDay = new Date();
-  // 2. Initialize heatmap
+  // TODO: hide heatmap by deafult
+  // TODO: show heatmap when action is taken on this card
+  // TODO: hide all other heatmaps when this heatmap is shown
   const heatmapSelector = `#cal-${habitName
     .replace(/\s+/g, "-")
     .toLowerCase()}`;
