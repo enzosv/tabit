@@ -126,9 +126,13 @@ export function renderAllHabits(habitData: HabitData) {
     setupHabit(habitName, habitData);
   });
 }
+
+window.addEventListener("online", () => {
+  setupSession();
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   renderAllHabits(loadData());
-  setupSession();
 
   const addHabitButton = document.getElementById("add-habit");
   const newHabitNameInput = document.getElementById(
