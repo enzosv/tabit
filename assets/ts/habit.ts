@@ -163,6 +163,8 @@ export function setupHabit(habitName: string, allHabits: HabitData) {
   // TODO: hide heatmap by deafult
   // TODO: show heatmap when action is taken on this card
   // TODO: hide all other heatmaps when this heatmap is shown
+  const earliest = Object.keys(allHabits[habitName]).sort()[0];
+  const earliest_date = new Date(earliest);
   const heatmapSelector = `#cal-${habitName
     .replace(/\s+/g, "-")
     .toLowerCase()}`;
@@ -170,7 +172,7 @@ export function setupHabit(habitName: string, allHabits: HabitData) {
     habitName,
     heatmapSelector,
     allHabits[habitName],
-    new Date()
+    earliest_date
   );
 
   const dayLabel = root.querySelector<HTMLButtonElement>(".day-label");
