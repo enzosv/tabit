@@ -127,10 +127,6 @@ export function renderAllHabits(habitData: HabitData) {
   });
 }
 
-window.addEventListener("online", () => {
-  setupSession();
-});
-
 document.addEventListener("DOMContentLoaded", () => {
   renderAllHabits(loadData());
 
@@ -179,4 +175,6 @@ document.addEventListener("DOMContentLoaded", () => {
       $("#new-habit-name").focus();
     }
   });
+
+  setupSession();
 });
