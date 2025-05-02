@@ -184,6 +184,7 @@ export function setupHabit(habitName: string, allHabits: HabitData) {
 
   const dayLabel = root.querySelector<HTMLButtonElement>(".day-label");
 
+  let selectedDay = new Date();
   setupHabitEventListeners(
     root,
     habitName,

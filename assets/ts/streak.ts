@@ -3,6 +3,7 @@ import { getDateKey, HabitLogs } from "./habit.ts";
 interface StreakInfo {
   type: "none" | "day" | "week";
   count: number;
+  last?: string;
 }
 
 function getWeekNumber(date: Date): number {
@@ -14,10 +15,6 @@ function getWeekNumber(date: Date): number {
 }
 
 function calculateStreak(logs: HabitLogs): StreakInfo {
-  const today = getDateKey(new Date());
-  if (!logs[today]) {
-    return { type: "none", count: 0 };
-  }
   const validLogs: HabitLogs = Object.fromEntries(
     Object.entries(logs).filter(([_, value]) => value > 0)
   );
@@ -26,6 +23,12 @@ function calculateStreak(logs: HabitLogs): StreakInfo {
     return { type: "none", count: 0 };
   }
   const dates = keys.sort();
+
+  const today = getDateKey(new Date());
+  if (!logs[today]) {
+    // show when last was
+    return { type: "none", count: 0, last: dates[dates.length - 1] };
+  }
 
   // check daily streak first
   const dailyStreak = calculateDailyStreak(validLogs, dates[0]);
@@ -37,7 +40,6 @@ function calculateStreak(logs: HabitLogs): StreakInfo {
   if (weeklyStreak > 1) {
     return { type: "week", count: weeklyStreak };
   }
-
   return { type: "none", count: dailyStreak };
 }
 
@@ -77,6 +79,7 @@ function calculateWeeklyStreak(dates: string[]): number {
 }
 
 function getStreakText(streak: StreakInfo): string {
+  console.log(streak);
   if (streak.count === 1 && streak.type === "none") {
     return "Good start!";
   }
@@ -85,6 +88,9 @@ function getStreakText(streak: StreakInfo): string {
   }
   if (streak.type === "day" && streak.count > 1) {
     return `${streak.count} day streak ❤️‍🔥`;
+  }
+  if (streak.type === "none" && streak.last) {
+    return `Last: ${streak.last}`;
   }
   return "";
 }
