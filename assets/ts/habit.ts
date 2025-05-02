@@ -152,6 +152,15 @@ function initializeAndConfigureHeatmap(
   return cal;
 }
 
+function getHabitStartDate(logs: HabitLogs) {
+  const days = Object.keys(logs);
+  if (days.length > 0) {
+    const earliest = days.sort()[0];
+    return new Date(earliest);
+  }
+  return new Date();
+}
+
 export function setupHabit(habitName: string, allHabits: HabitData) {
   const root = document.querySelector(`[data-habit-name="${habitName}"]`);
   if (!root) {
@@ -159,20 +168,18 @@ export function setupHabit(habitName: string, allHabits: HabitData) {
     return;
   }
 
-  let selectedDay = new Date();
   // TODO: hide heatmap by deafult
   // TODO: show heatmap when action is taken on this card
   // TODO: hide all other heatmaps when this heatmap is shown
-  const earliest = Object.keys(allHabits[habitName]).sort()[0];
-  const earliest_date = new Date(earliest);
+  const logs = allHabits[habitName];
   const heatmapSelector = `#cal-${habitName
     .replace(/\s+/g, "-")
     .toLowerCase()}`;
   const cal = initializeAndConfigureHeatmap(
     habitName,
     heatmapSelector,
-    allHabits[habitName],
-    earliest_date
+    logs,
+    getHabitStartDate(logs)
   );
 
   const dayLabel = root.querySelector<HTMLButtonElement>(".day-label");
