@@ -1,4 +1,4 @@
-import { getDateKey, HabitLogs } from "./habit.ts";
+import { formatDateLabel, getDateKey, HabitLogs } from "./habit.ts";
 
 interface StreakInfo {
   type: "none" | "day" | "week";
@@ -79,7 +79,6 @@ function calculateWeeklyStreak(dates: string[]): number {
 }
 
 function getStreakText(streak: StreakInfo): string {
-  console.log(streak);
   if (streak.count === 1 && streak.type === "none") {
     return "Good start!";
   }
@@ -90,7 +89,8 @@ function getStreakText(streak: StreakInfo): string {
     return `${streak.count} day streak ❤️‍🔥`;
   }
   if (streak.type === "none" && streak.last) {
-    return `Last: ${streak.last}`;
+    const date = new Date(streak.last);
+    return `Last: ${formatDateLabel(date)}`;
   }
   return "";
 }

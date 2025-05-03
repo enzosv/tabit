@@ -9,7 +9,7 @@ export interface HabitData {
   [habitName: string]: HabitLogs;
 }
 
-function formatDateLabel(date: Date): string {
+export function formatDateLabel(date: Date): string {
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
