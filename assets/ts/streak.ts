@@ -64,7 +64,6 @@ function calculateWeeklyStreak(dates: string[]): number {
     const weekNum = getWeekNumber(new Date(date));
     weeklyLogs.set(weekNum, true);
   });
-  console.log(weeklyLogs);
 
   const currentWeek = getWeekNumber(new Date());
   let streak = 0;
