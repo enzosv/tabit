@@ -40,7 +40,8 @@ function calculateStreak(logs: HabitLogs): StreakInfo {
   if (weeklyStreak > 1) {
     return { type: "week", count: weeklyStreak };
   }
-  return { type: "none", count: dailyStreak };
+
+  return { type: "day", count: dailyStreak };
 }
 
 function calculateDailyStreak(logs: HabitLogs, start: string): number {
@@ -79,7 +80,7 @@ function calculateWeeklyStreak(dates: string[]): number {
 
 function getStreakText(streak: StreakInfo): string {
   if (streak.count === 1 && streak.type === "none") {
-    return "Good start!";
+    return "";
   }
   if (streak.type === "week") {
     return `${streak.count} week streak 🔥`;
