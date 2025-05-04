@@ -1,4 +1,5 @@
-import { formatDateLabel, getDateKey, HabitLogs } from "./habit.ts";
+import { HabitLogs } from "./habit.ts";
+import { formatDateLabel, getDateKey } from "./util.ts";
 
 interface StreakInfo {
   type: "none" | "day" | "week";
