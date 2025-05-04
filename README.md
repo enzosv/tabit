@@ -8,18 +8,17 @@
 - [Cal-Heatmap](https://cal-heatmap.com) per habit
 
 # TODO
-- [ ] Go API for accounts and sync
+- [x] Go API for accounts and sync
   - [x] in netlify functions
   - [x] use [Supabase Postgres](https://www.netlify.com/integrations/supabase/) for persistence
   - [x] use [go-jet](https://github.com/go-jet/jet) to interact with database
   - [x] use [golang-migrate](https://github.com/golang-migrate/migrate) for migrations
-  - [ ] accounts
-    - [x] bulk sync
-    - [ ] forgot password
-    - [ ] apple signin
-    - [x] email password login
-    - [x] signup
-  - [ ] per event api call
+- [ ] accounts
+  - [x] bulk sync
+  - [ ] forgot password
+  - [ ] apple signin
+  - [x] email password login
+  - [x] signup
 - [ ] Chrome extension
 - [x] Search and add using same text input
   - [x] Add if new
@@ -41,5 +40,9 @@
   - [ ] rename
 - Optimization
   - [ ] only rerender per habit.html if there is a change
-  - [ ] bundler to remove [unused css](https://github.com/apaleslimghost/postcss-remove-unused)
+  - [ ] remove unused css
+  - [ ] remove unused js
+  - [ ] bundle vendor js
+  - [ ] serviceworker cache
+  - [ ] per event api call
 
