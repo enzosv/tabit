@@ -45,4 +45,5 @@
   - [ ] bundle vendor js
   - [ ] serviceworker cache
   - [ ] per event api call
+  - [ ] disable buttons until sync is done
 
