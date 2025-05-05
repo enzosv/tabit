@@ -46,6 +46,9 @@ function clearLog(habitName: string, habitData: HabitData, date?: Date) {
 }
 
 function renameHabit(newName: string, oldName: string, habitData: HabitData) {
+  if (newName === oldName) {
+    return;
+  }
   if (habitData[newName]) {
     // new name already exists
     alert(`${newName} already exists`);
@@ -53,7 +56,6 @@ function renameHabit(newName: string, oldName: string, habitData: HabitData) {
   }
   habitData[newName] = habitData[oldName];
   delete habitData[oldName];
-  delete heatmapInstances[oldName];
   saveData(habitData);
   // TODO: rename request to /habits/id
   renderAllHabits(habitData); // Re-render the UI
@@ -70,7 +72,6 @@ function deleteHabit(habitName: string, habitData: HabitData) {
   }
 
   delete habitData[habitName]; // Remove habit from data object
-  delete heatmapInstances[habitName]; // Remove heatmap instance
   saveData(habitData);
   // TODO: delete request to /habits/id
   renderAllHabits(habitData); // Re-render the UI
@@ -123,7 +124,7 @@ function initializeAndConfigureHeatmap(
         color: {
           type: "linear",
           range: ["#2E333A", "#3399FF"],
-          domain: [0, 4],
+          domain: [0, 2],
           interpolate: "hsl",
         },
         // opacity: {
@@ -263,11 +264,13 @@ function setupHabitEventListeners(
       // const habitName = $(root).find(".habit-title").text();
       const renameInput = $(".rename-habit-input");
       renameInput.val(habitName);
-      $(".save-habit").on("click", function () {
-        // TOOD: reorder
-        $('[data-bs-toggle="popover"]').popover("hide");
-        renameHabit(renameInput.val(), habitName, allHabits);
-      });
+      $(".save-habit")
+        .off("click")
+        .on("click", function () {
+          // TODO: reorder
+          $('[data-bs-toggle="popover"]').popover("hide");
+          renameHabit(renameInput.val(), habitName, allHabits);
+        });
 
       $(".delete-habit")
         .off("click")
