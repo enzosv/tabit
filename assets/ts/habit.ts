@@ -45,13 +45,29 @@ function clearLog(habitName: string, habitData: HabitData, date?: Date) {
   updateStreakDisplay(habitName, habitData[habitName]); // Add this line
 }
 
+function renameHabit(newName: string, oldName: string, habitData: HabitData) {
+  if (habitData[newName]) {
+    // new name already exists
+    alert(`${newName} already exists`);
+    return;
+  }
+  habitData[newName] = habitData[oldName];
+  delete habitData[oldName];
+  delete heatmapInstances[oldName];
+  saveData(habitData);
+  // TODO: rename request to /habits/id
+  renderAllHabits(habitData); // Re-render the UI
+}
+
 function deleteHabit(habitName: string, habitData: HabitData) {
-  // TODO: modal to view more info about habit
   console.log(`Deleting habit: ${habitName}`);
-  // Optional: Add a confirmation dialog
-  // if (!confirm(`Are you sure you want to delete the habit "${habitName}"? This cannot be undone.`)) {
-  //   return;
-  // }
+  if (
+    !confirm(
+      `Are you sure you want to delete the habit "${habitName}"? This cannot be undone.`
+    )
+  ) {
+    return;
+  }
 
   delete habitData[habitName]; // Remove habit from data object
   delete heatmapInstances[habitName]; // Remove heatmap instance
@@ -244,10 +260,13 @@ function setupHabitEventListeners(
   $(document).on("shown.bs.popover", function (e) {
     // Use a short timeout to ensure content is in the DOM
     setTimeout(() => {
-      $(".rename-habit-btn").on("click", function () {
-        // Your rename logic
+      // const habitName = $(root).find(".habit-title").text();
+      const renameInput = $(".rename-habit-input");
+      renameInput.val(habitName);
+      $(".save-habit").on("click", function () {
+        // TOOD: reorder
         $('[data-bs-toggle="popover"]').popover("hide");
-        console.log("Rename clicked");
+        renameHabit(renameInput.val(), habitName, allHabits);
       });
 
       $(".delete-habit")
