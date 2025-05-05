@@ -1,9 +1,12 @@
+import { newline } from "https://deno.land/x/postcss_selector_parser@v6.0.2/src/tokenTypes.js";
 import { saveData, renderAllHabits, heatmapInstances } from "./main.ts";
 import { updateStreakDisplay } from "./streak.ts";
 import { formatDateLabel, getDateKey } from "./util.ts";
 
 export interface HabitLogs {
   [date: string]: number;
+  sort: number;
+  weekly_goal: number;
 }
 
 export interface HabitData {
@@ -45,19 +48,18 @@ function clearLog(habitName: string, habitData: HabitData, date?: Date) {
   updateStreakDisplay(habitName, habitData[habitName]); // Add this line
 }
 
-function renameHabit(newName: string, oldName: string, habitData: HabitData) {
-  if (newName === oldName) {
-    return;
+function editHabit(
+  newName: string,
+  oldName: string,
+  habitData: HabitData,
+  newLog: HabitLogs
+) {
+  habitData[newName] = newLog;
+  if (newName != oldName) {
+    delete habitData[oldName];
   }
-  if (habitData[newName]) {
-    // new name already exists
-    alert(`${newName} already exists`);
-    return;
-  }
-  habitData[newName] = habitData[oldName];
-  delete habitData[oldName];
   saveData(habitData);
-  // TODO: rename request to /habits/id
+  // TODO: edit request to /habits/id
   renderAllHabits(habitData); // Re-render the UI
 }
 
@@ -261,25 +263,46 @@ function setupHabitEventListeners(
   $(document).on("shown.bs.popover", function (e) {
     // Use a short timeout to ensure content is in the DOM
     setTimeout(() => {
+      setupEditPopover(habitName, allHabits);
       // const habitName = $(root).find(".habit-title").text();
-      const renameInput = $(".rename-habit-input");
-      renameInput.val(habitName);
-      $(".save-habit")
-        .off("click")
-        .on("click", function () {
-          // TODO: reorder
-          $('[data-bs-toggle="popover"]').popover("hide");
-          renameHabit(renameInput.val(), habitName, allHabits);
-        });
-
-      $(".delete-habit")
-        .off("click")
-        .on("click", function () {
-          $('[data-bs-toggle="popover"]').popover("hide");
-          deleteHabit(habitName, allHabits);
-        });
     }, 0);
   });
+}
+
+function setupEditPopover(habitName: string, allHabits: HabitData) {
+  const renameInput = $(".rename-habit-input");
+  renameInput.val(habitName);
+  const sortInput = $(".sort-input");
+  const weeklyGoalInput = $(".weekly-goal-input");
+  const habit = allHabits[habitName];
+  if (habit.sort) {
+    sortInput.val(habit.sort);
+  }
+  if (habit.weekly_goal) {
+    weeklyGoalInput.val(habit.weekly_goal);
+  }
+  $(".save-habit")
+    .off("click")
+    .on("click", function () {
+      $('[data-bs-toggle="popover"]').popover("hide");
+      const newLog = allHabits[habitName];
+      const newGoal = weeklyGoalInput.val();
+      if (newGoal) {
+        newLog.weekly_goal = newGoal;
+      }
+      const newSort = sortInput.val();
+      if (newSort) {
+        newLog.sort = newSort;
+      }
+      editHabit(renameInput.val(), habitName, allHabits, newLog);
+    });
+
+  $(".delete-habit")
+    .off("click")
+    .on("click", function () {
+      $('[data-bs-toggle="popover"]').popover("hide");
+      deleteHabit(habitName, allHabits);
+    });
 }
 
 // --- Heatmap Interaction ---
