@@ -8,8 +8,23 @@
         <h3 class="habit-title mb-0"></h3>
         <small class="text-secondary streak-text"></small>
       </div>
-      <button class="btn btn-danger btn-sm delete-habit mb-3 align-self-center">
-        Delete
+      <button
+        class="btn btn-primary btn-sm edit-habit mb-3 align-self-center"
+        data-bs-toggle="popover"
+        data-bs-placement="left"
+        data-bs-html="true"
+        data-bs-content='
+          <div class="edit-habit-popover">
+            <div class="mb-3">
+              <input type="text" class="form-control rename-habit-input" placeholder="New name">
+            </div>
+            <div class="d-flex justify-content-between">
+              <button class="btn btn-danger delete-habit">Delete</button>
+              <button class="btn btn-primary rename-habit">Rename</button>
+            </div>
+          </div>'
+      >
+        Edit
       </button>
     </div>
     <div class="heatmap-wrapper mb-3">

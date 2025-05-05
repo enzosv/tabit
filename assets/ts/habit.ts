@@ -234,9 +234,30 @@ function setupHabitEventListeners(
     ?.addEventListener("click", () =>
       clearLog(habitName, allHabits, getSelectedDay())
     );
-  root
-    .querySelector(".delete-habit")
-    ?.addEventListener("click", () => deleteHabit(habitName, allHabits));
+
+  $(root).find(".edit-habit").popover({
+    html: true,
+    placement: "bottom",
+    sanitize: false,
+  });
+
+  $(document).on("shown.bs.popover", function (e) {
+    // Use a short timeout to ensure content is in the DOM
+    setTimeout(() => {
+      $(".rename-habit-btn").on("click", function () {
+        // Your rename logic
+        $('[data-bs-toggle="popover"]').popover("hide");
+        console.log("Rename clicked");
+      });
+
+      $(".delete-habit")
+        .off("click")
+        .on("click", function () {
+          $('[data-bs-toggle="popover"]').popover("hide");
+          deleteHabit(habitName, allHabits);
+        });
+    }, 0);
+  });
 }
 
 // --- Heatmap Interaction ---
