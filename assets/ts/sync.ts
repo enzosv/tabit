@@ -14,7 +14,6 @@ export async function sync(
       client_timestamp: last_update,
     };
     const payload = JSON.stringify(body);
-    console.log(payload);
     const response = await fetch("/api/sync", {
       method: "POST",
       headers: {

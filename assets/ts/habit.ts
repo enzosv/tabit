@@ -284,12 +284,8 @@ function setupEditPopover(habitName: string, allHabits: HabitMap) {
   const sortInput = $(".sort-input");
   const weeklyGoalInput = $(".weekly-goal-input");
   const habit = allHabits[habitName];
-  if (habit.sort) {
-    sortInput.val(habit.sort);
-  }
-  if (habit.weekly_goal) {
-    weeklyGoalInput.val(habit.weekly_goal);
-  }
+  sortInput.val(habit.sort ?? 0);
+  weeklyGoalInput.val(habit.weekly_goal ?? 0);
   $(".save-habit")
     .off("click")
     .on("click", function () {
