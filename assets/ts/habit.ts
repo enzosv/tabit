@@ -1,6 +1,7 @@
 import { saveData, renderAllHabits, heatmapInstances } from "./main.ts";
 import { updateStreakDisplay } from "./streak.ts";
 import { formatDateLabel, getDateKey } from "./util.ts";
+import { updateWeeklyGoalDisplay } from "./weekly-goal.ts";
 
 export type HabitLogs = { [date: string]: number };
 
@@ -32,6 +33,7 @@ export function logHabit(habitName: string, habitData: HabitMap, date?: Date) {
   // TODO: put request to /habits/id
   updateHeatmap(habitName, habitData[habitName]);
   updateStreakDisplay(habitName, habitData[habitName].logs);
+  updateWeeklyGoalDisplay(habitName, habitData[habitName]);
 }
 
 function clearLog(habitName: string, habitData: HabitMap, date?: Date) {
@@ -47,6 +49,7 @@ function clearLog(habitName: string, habitData: HabitMap, date?: Date) {
   // TODO: put request to /habits/id
   updateHeatmap(habitName, habitData[habitName]);
   updateStreakDisplay(habitName, habitData[habitName].logs);
+  updateWeeklyGoalDisplay(habitName, habitData[habitName]);
 }
 
 function editHabit(
@@ -219,6 +222,7 @@ export function setupHabit(habitName: string, allHabits: HabitMap) {
   });
 
   updateStreakDisplay(habitName, allHabits[habitName].logs);
+  updateWeeklyGoalDisplay(habitName, allHabits[habitName]);
 }
 
 // --- Event Listener Setup ---
