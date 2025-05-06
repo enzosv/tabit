@@ -295,11 +295,11 @@ function setupEditPopover(habitName: string, allHabits: HabitMap) {
     .on("click", function () {
       $('[data-bs-toggle="popover"]').popover("hide");
       const newLog = allHabits[habitName];
-      const newGoal = weeklyGoalInput.val();
+      const newGoal = parseInt(weeklyGoalInput.val(), 10);
       if (newGoal) {
         newLog.weekly_goal = newGoal;
       }
-      const newSort = sortInput.val();
+      const newSort = parseInt(sortInput.val(), 10);
       if (newSort) {
         newLog.sort = newSort;
       }
