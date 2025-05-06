@@ -97,6 +97,7 @@ function getStreakText(streak: StreakInfo): string {
 }
 
 export function updateStreakDisplay(habitName: string, logs: HabitLogs) {
+  if (!logs) return;
   const root = document.querySelector(`[data-habit-name="${habitName}"]`);
   if (!root) return;
 

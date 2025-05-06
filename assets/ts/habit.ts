@@ -104,10 +104,13 @@ function initializeAndConfigureHeatmap(
   const cal = new CalHeatmap();
   heatmapInstances[habitName] = cal; // Store instance
 
-  const data = Object.entries(habit.logs).map(([date, value]) => ({
-    date,
-    value,
-  }));
+  let data = {};
+  if (habit.logs) {
+    data = Object.entries(habit.logs).map(([date, value]) => ({
+      date,
+      value,
+    }));
+  }
 
   cal.paint(
     {
@@ -160,6 +163,9 @@ function initializeAndConfigureHeatmap(
 }
 
 function getHabitStartDate(logs: HabitLogs) {
+  if (!logs) {
+    return new Date();
+  }
   const days = Object.keys(logs);
   if (days.length > 0) {
     const earliest = days.sort()[0];
@@ -179,6 +185,9 @@ export function setupHabit(habitName: string, allHabits: HabitMap) {
   // TODO: show heatmap when action is taken on this card
   // TODO: hide all other heatmaps when this heatmap is shown
   const habit = allHabits[habitName];
+  if (!habit) {
+    return;
+  }
   const heatmapSelector = `#cal-${habitName
     .replace(/\s+/g, "-")
     .toLowerCase()}`;

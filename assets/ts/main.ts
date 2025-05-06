@@ -111,7 +111,7 @@ export function renderAllHabits(habitMap: HabitMap) {
   const sortedHabits = Object.entries(habitMap)
     .map(([name, data]) => ({
       name,
-      sort: data.sort || 0,
+      sort: data?.sort ?? 0,
     }))
     .sort((a, b) => (a.sort || 0) - (b.sort || 0))
     .map(({ name }) => name);
