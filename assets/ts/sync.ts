@@ -1,8 +1,8 @@
-import { HabitData } from "./habit.ts";
+import { HabitMap } from "./habit.ts";
 
 export async function sync(
   token: string | null,
-  data: HabitData,
+  data: HabitMap,
   last_update: number
 ) {
   if (!token) {
@@ -13,13 +13,15 @@ export async function sync(
       habit_data: data,
       client_timestamp: last_update,
     };
+    const payload = JSON.stringify(body);
+    console.log(payload);
     const response = await fetch("/api/sync", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: token,
       },
-      body: JSON.stringify(body),
+      body: payload,
     });
 
     if (!response.ok) {

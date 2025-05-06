@@ -1,4 +1,4 @@
-import { HabitData, logHabit, setupHabit } from "./habit.ts";
+import { HabitMap, logHabit, setupHabit } from "./habit.ts";
 import { authToken, setupSession } from "./auth.ts";
 import { sync } from "./sync.ts";
 const HABIT_STORAGE_KEY = "habitData";
@@ -51,7 +51,7 @@ function filterHabits(searchText: string) {
 }
 
 const debouncedSync = debounce(
-  (token: string, habits: HabitData, timestamp: number) => {
+  (token: string, habits: HabitMap, timestamp: number) => {
     console.log("sync");
     sync(token, habits, timestamp);
   },
@@ -59,7 +59,7 @@ const debouncedSync = debounce(
 );
 
 // --- Data Functions ---
-export function saveData(data: HabitData) {
+export function saveData(data: HabitMap) {
   try {
     localStorage.setItem(HABIT_STORAGE_KEY, JSON.stringify(data));
     if (authToken) {
@@ -71,15 +71,15 @@ export function saveData(data: HabitData) {
   }
 }
 
-export function loadData(): HabitData {
+export function loadData(): HabitMap {
   const storedData = localStorage.getItem(HABIT_STORAGE_KEY);
-  return storedData ? JSON.parse(storedData) : ({} as HabitData);
+  return storedData ? JSON.parse(storedData) : ({} as HabitMap);
 }
 
 // --- Event Handlers ---
-function addNewHabit(habitName: string, habitData: HabitData) {
+function addNewHabit(habitName: string, habitData: HabitMap) {
   if (habitName && !habitData[habitName]) {
-    habitData[habitName] = {};
+    habitData[habitName] = { logs: {} };
     saveData(habitData);
     // TODO: post request to /habits
     renderAllHabits(habitData);
@@ -94,7 +94,7 @@ function addNewHabit(habitName: string, habitData: HabitData) {
 
 // --- Rendering Functions ---
 
-export function renderAllHabits(habitData: HabitData) {
+export function renderAllHabits(habitMap: HabitMap) {
   const habitsContainer = document.getElementById("habits-container");
   const template = document.getElementById(
     "habit-template"
@@ -108,7 +108,7 @@ export function renderAllHabits(habitData: HabitData) {
   habitsContainer.innerHTML = "";
   heatmapInstances = {};
 
-  const sortedHabits = Object.entries(habitData)
+  const sortedHabits = Object.entries(habitMap)
     .map(([name, data]) => ({
       name,
       sort: data.sort || 0,
@@ -129,7 +129,7 @@ export function renderAllHabits(habitData: HabitData) {
 
     habitsContainer.appendChild(clone);
 
-    setupHabit(habitName, habitData);
+    setupHabit(habitName, habitMap);
   });
 }
 

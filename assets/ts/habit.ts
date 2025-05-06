@@ -2,23 +2,16 @@ import { saveData, renderAllHabits, heatmapInstances } from "./main.ts";
 import { updateStreakDisplay } from "./streak.ts";
 import { formatDateLabel, getDateKey } from "./util.ts";
 
-export interface HabitLogs {
-  [date: string]: number;
-  sort: number;
-  weekly_goal: number;
+export type HabitLogs = { [date: string]: number };
+
+export interface Habit {
+  logs: HabitLogs;
+  sort?: number | undefined;
+  weekly_goal?: number | undefined;
 }
 
-export function getDateKeysFromLogs(logs: {
-  [date: string]: number;
-}): string[] {
-  return Object.keys(logs).filter(
-    (key) =>
-      key !== "sort" && key !== "weekly_goal" && /^\d{4}-\d{2}-\d{2}$/.test(key) // ensures key matches date format YYYY-MM-DD
-  );
-}
-
-export interface HabitData {
-  [habitName: string]: HabitLogs;
+export interface HabitMap {
+  [habitName: string]: Habit;
 }
 
 function updateDayLabel(label: HTMLElement | null, date: Date) {
@@ -29,40 +22,40 @@ function updateDayLabel(label: HTMLElement | null, date: Date) {
 }
 
 // --- Event Handlers ---
-export function logHabit(habitName: string, habitData: HabitData, date?: Date) {
+export function logHabit(habitName: string, habitData: HabitMap, date?: Date) {
   const day = getDateKey(date);
-  if (!habitData[habitName][day]) {
-    habitData[habitName][day] = 0;
+  if (!habitData[habitName].logs[day]) {
+    habitData[habitName].logs[day] = 0;
   }
-  habitData[habitName][day]++;
+  habitData[habitName].logs[day]++;
   saveData(habitData);
   // TODO: put request to /habits/id
   updateHeatmap(habitName, habitData[habitName]);
-  updateStreakDisplay(habitName, habitData[habitName]); // Add this line
+  updateStreakDisplay(habitName, habitData[habitName].logs);
 }
 
-function clearLog(habitName: string, habitData: HabitData, date?: Date) {
+function clearLog(habitName: string, habitData: HabitMap, date?: Date) {
   const day = getDateKey(date);
-  if (habitData[habitName][day] < 1) {
+  if (habitData[habitName].logs[day] < 1) {
     return;
   }
-  if (!habitData[habitName][day]) {
-    habitData[habitName][day] = 0;
+  if (!habitData[habitName].logs[day]) {
+    habitData[habitName].logs[day] = 0;
   }
-  habitData[habitName][day]--;
+  habitData[habitName].logs[day]--;
   saveData(habitData);
   // TODO: put request to /habits/id
   updateHeatmap(habitName, habitData[habitName]);
-  updateStreakDisplay(habitName, habitData[habitName]); // Add this line
+  updateStreakDisplay(habitName, habitData[habitName].logs);
 }
 
 function editHabit(
   newName: string,
   oldName: string,
-  habitData: HabitData,
-  newLog: HabitLogs
+  habitData: HabitMap,
+  newHabit: Habit
 ) {
-  habitData[newName] = newLog;
+  habitData[newName] = newHabit;
   if (newName != oldName) {
     delete habitData[oldName];
   }
@@ -71,7 +64,7 @@ function editHabit(
   renderAllHabits(habitData); // Re-render the UI
 }
 
-function deleteHabit(habitName: string, habitData: HabitData) {
+function deleteHabit(habitName: string, habitData: HabitMap) {
   console.log(`Deleting habit: ${habitName}`);
   if (
     !confirm(
@@ -88,13 +81,13 @@ function deleteHabit(habitName: string, habitData: HabitData) {
 }
 
 // --- Heatmap Update ---
-function updateHeatmap(habitName: string, logs: HabitLogs) {
+function updateHeatmap(habitName: string, habit: Habit) {
   const cal = heatmapInstances[habitName];
   if (!cal) {
     console.error(`Heatmap instance not found for ${habitName}`);
     return;
   }
-  const data = Object.entries(logs).map(([date, value]) => ({
+  const data = Object.entries(habit.logs).map(([date, value]) => ({
     date,
     value,
   }));
@@ -105,13 +98,13 @@ function updateHeatmap(habitName: string, logs: HabitLogs) {
 function initializeAndConfigureHeatmap(
   habitName: string,
   heatmapSelector: string,
-  logs: HabitLogs,
+  habit: Habit,
   startDate: Date
 ): CalHeatmap {
   const cal = new CalHeatmap();
   heatmapInstances[habitName] = cal; // Store instance
 
-  const data = Object.entries(logs).map(([date, value]) => ({
+  const data = Object.entries(habit.logs).map(([date, value]) => ({
     date,
     value,
   }));
@@ -167,7 +160,7 @@ function initializeAndConfigureHeatmap(
 }
 
 function getHabitStartDate(logs: HabitLogs) {
-  const days = getDateKeysFromLogs(logs);
+  const days = Object.keys(logs);
   if (days.length > 0) {
     const earliest = days.sort()[0];
     return new Date(earliest);
@@ -175,7 +168,7 @@ function getHabitStartDate(logs: HabitLogs) {
   return new Date();
 }
 
-export function setupHabit(habitName: string, allHabits: HabitData) {
+export function setupHabit(habitName: string, allHabits: HabitMap) {
   const root = document.querySelector(`[data-habit-name="${habitName}"]`);
   if (!root) {
     console.error(`Habit section for "${habitName}" not found`);
@@ -185,15 +178,15 @@ export function setupHabit(habitName: string, allHabits: HabitData) {
   // TODO: hide heatmap by deafult
   // TODO: show heatmap when action is taken on this card
   // TODO: hide all other heatmaps when this heatmap is shown
-  const logs = allHabits[habitName];
+  const habit = allHabits[habitName];
   const heatmapSelector = `#cal-${habitName
     .replace(/\s+/g, "-")
     .toLowerCase()}`;
   const cal = initializeAndConfigureHeatmap(
     habitName,
     heatmapSelector,
-    logs,
-    getHabitStartDate(logs)
+    habit,
+    getHabitStartDate(habit.logs)
   );
 
   const dayLabel = root.querySelector<HTMLButtonElement>(".day-label");
@@ -216,14 +209,14 @@ export function setupHabit(habitName: string, allHabits: HabitData) {
     updateDayLabel(dayLabel, date);
   });
 
-  updateStreakDisplay(habitName, allHabits[habitName]); // Add this line before setupHabitEventListeners
+  updateStreakDisplay(habitName, allHabits[habitName].logs);
 }
 
 // --- Event Listener Setup ---
 function setupHabitEventListeners(
   root: Element,
   habitName: string,
-  allHabits: HabitData,
+  allHabits: HabitMap,
   getSelectedDay: () => Date,
   onDaySelect: (day: Date) => void
 ) {
@@ -276,7 +269,7 @@ function setupHabitEventListeners(
     });
 }
 
-function setupEditPopover(habitName: string, allHabits: HabitData) {
+function setupEditPopover(habitName: string, allHabits: HabitMap) {
   const renameInput = $(".rename-habit-input");
   renameInput.val(habitName);
   const sortInput = $(".sort-input");

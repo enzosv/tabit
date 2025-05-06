@@ -1,4 +1,4 @@
-import { getDateKeysFromLogs, HabitLogs } from "./habit.ts";
+import { HabitLogs } from "./habit.ts";
 import { formatDateLabel, getDateKey } from "./util.ts";
 
 interface StreakInfo {
@@ -19,7 +19,7 @@ function calculateStreak(logs: HabitLogs): StreakInfo {
   const validLogs = Object.fromEntries(
     Object.entries(logs).filter(([_, value]) => value > 0)
   );
-  const keys = getDateKeysFromLogs(validLogs);
+  const keys = Object.keys(validLogs);
   if (keys.length < 1) {
     return { type: "none", count: 0 };
   }
