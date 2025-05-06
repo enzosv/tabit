@@ -24,7 +24,9 @@ function countWeek(logs: HabitLogs): number {
   let count = 0;
   while (currentDate >= new Date(monday)) {
     const dateKey = getDateKey(currentDate);
-    count += logs[dateKey];
+    if (logs[dateKey]) {
+      count += logs[dateKey];
+    }
     currentDate.setDate(currentDate.getDate() - 1);
   }
   return count;
