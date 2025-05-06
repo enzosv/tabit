@@ -55,8 +55,14 @@ type LogHabitRequest struct {
 }
 
 type SyncDataRequest struct {
-	LastUpdated int64                     `json:"client_timestamp"` // Unix milliseconds UTC
-	HabitData   map[string]map[string]int `json:"habit_data"`
+	LastUpdated int64     `json:"client_timestamp"` // Unix milliseconds UTC
+	HabitData   HabitData `json:"habit_data"`
+}
+
+type HabitData struct {
+	Logs       map[string]int `json:"logs"`
+	WeeklyGoal int            `json:"weekly_goal"`
+	Sort       int            `json:"sort"`
 }
 
 type Response struct {
@@ -224,11 +230,6 @@ func handleSync(ds DataStore) http.HandlerFunc {
 		var req SyncDataRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			sendErrorResponse(w, "Invalid request format: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		if req.HabitData == nil {
-			sendErrorResponse(w, "Missing required fields: habit_data", http.StatusBadRequest)
 			return
 		}
 
