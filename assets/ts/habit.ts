@@ -8,6 +8,13 @@ export interface HabitLogs {
   weekly_goal: number;
 }
 
+export function getDateKeysFromLogs(logs: HabitLogs): string[] {
+  return Object.keys(logs).filter(
+    (key) =>
+      key !== "sort" && key !== "weekly_goal" && /^\d{4}-\d{2}-\d{2}$/.test(key) // ensures key matches date format YYYY-MM-DD
+  );
+}
+
 export interface HabitData {
   [habitName: string]: HabitLogs;
 }
@@ -158,7 +165,7 @@ function initializeAndConfigureHeatmap(
 }
 
 function getHabitStartDate(logs: HabitLogs) {
-  const days = Object.keys(logs);
+  const days = getDateKeysFromLogs(logs);
   if (days.length > 0) {
     const earliest = days.sort()[0];
     return new Date(earliest);
