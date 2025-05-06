@@ -3,6 +3,7 @@
 - Be reminded whenever you open a new tab
 - Main purpose is to learn [hugo](https://github.com/gohugoio/hugo) and [go-jet](https://github.com/go-jet/jet)
 
+![Screenshot](./screenshot.png)
 ## Features
 - Local first. Fast and works offline.
 - [Cal-Heatmap](https://cal-heatmap.com) per habit
