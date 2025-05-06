@@ -49,19 +49,21 @@ func (ds *PostgresDataStore) SyncUserData(ctx context.Context, user_id string, l
 		slog.ErrorContext(ctx, "Error querying sync state", "user", user_id, "error", err)
 		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state", Err: err}
 	}
-	if existing.UserID == "" {
-		log.Println(stmt.Sql())
-		slog.WarnContext(ctx, "existing is likely invalid", "data", existing.Data, "user", existing.UserID)
-		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state"}
-	}
+	if err != qrm.ErrNoRows {
+		if existing.UserID == "" {
+			log.Println(stmt.Sql())
+			slog.WarnContext(ctx, "existing is likely invalid", "data", existing.Data, "user", existing.UserID)
+			return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state"}
+		}
 
-	if existing.LastUpdated > last_updated {
-		slog.InfoContext(ctx, "returning existing", "user", user_id, "last_updated", last_updated)
-		return &UserSyncStateModel{
-			UserID:      existing.UserID,
-			LastUpdated: existing.LastUpdated,
-			Data:        existing.Data,
-		}, nil
+		if existing.LastUpdated > last_updated {
+			slog.InfoContext(ctx, "returning existing", "user", user_id, "last_updated", last_updated)
+			return &UserSyncStateModel{
+				UserID:      existing.UserID,
+				LastUpdated: existing.LastUpdated,
+				Data:        existing.Data,
+			}, nil
+		}
 	}
 	slog.InfoContext(ctx, "upserting new time", "user", user_id, "last_updated", last_updated)
 
