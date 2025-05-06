@@ -1,4 +1,3 @@
-import { newline } from "https://deno.land/x/postcss_selector_parser@v6.0.2/src/tokenTypes.js";
 import { saveData, renderAllHabits, heatmapInstances } from "./main.ts";
 import { updateStreakDisplay } from "./streak.ts";
 import { formatDateLabel, getDateKey } from "./util.ts";
@@ -67,7 +66,7 @@ function deleteHabit(habitName: string, habitData: HabitData) {
   console.log(`Deleting habit: ${habitName}`);
   if (
     !confirm(
-      `Are you sure you want to delete the habit "${habitName}"? This cannot be undone.`
+      `Are you sure you want to delete "${habitName}"? This cannot be undone.`
     )
   ) {
     return;

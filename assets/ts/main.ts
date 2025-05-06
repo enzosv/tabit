@@ -110,7 +110,15 @@ export function renderAllHabits(habitData: HabitData) {
   habitsContainer.innerHTML = "";
   heatmapInstances = {};
 
-  Object.keys(habitData).forEach((habitName) => {
+  const sortedHabits = Object.entries(habitData)
+    .map(([name, data]) => ({
+      name,
+      sort: data.sort || 0,
+    }))
+    .sort((a, b) => (a.sort || 0) - (b.sort || 0))
+    .map(({ name }) => name);
+
+  sortedHabits.forEach((habitName) => {
     const clone = template.content.cloneNode(true) as HTMLElement;
     const habitSection = clone.querySelector(".habit-section")!;
     const heatmapDiv = clone.querySelector(".heatmap")!;

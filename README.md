@@ -35,9 +35,9 @@
 - Habits
   - [x] streak label
   - [ ] weekly target 🏆
-  - [ ] order
+  - [x] order
   - [ ] color
-  - [ ] rename
+  - [x] rename
 - Optimization
   - [ ] only rerender per habit.html if there is a change
   - [ ] remove unused css

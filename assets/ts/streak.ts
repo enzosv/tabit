@@ -19,7 +19,9 @@ function calculateStreak(logs: HabitLogs): StreakInfo {
   const validLogs: HabitLogs = Object.fromEntries(
     Object.entries(logs).filter(([_, value]) => value > 0)
   );
-  const keys = Object.keys(validLogs);
+  const keys = Object.keys(validLogs).filter(
+    (key) => key != "sort" && key != "weekly_goal"
+  );
   if (keys.length < 1) {
     return { type: "none", count: 0 };
   }
