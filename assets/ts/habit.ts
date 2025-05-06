@@ -8,7 +8,9 @@ export interface HabitLogs {
   weekly_goal: number;
 }
 
-export function getDateKeysFromLogs(logs: HabitLogs): string[] {
+export function getDateKeysFromLogs(logs: {
+  [date: string]: number;
+}): string[] {
   return Object.keys(logs).filter(
     (key) =>
       key !== "sort" && key !== "weekly_goal" && /^\d{4}-\d{2}-\d{2}$/.test(key) // ensures key matches date format YYYY-MM-DD

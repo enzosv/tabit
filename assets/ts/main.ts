@@ -3,9 +3,7 @@ import { authToken, setupSession } from "./auth.ts";
 import { sync } from "./sync.ts";
 const HABIT_STORAGE_KEY = "habitData";
 
-export let heatmapInstances: Record<string, CalHeatmap> = {}; // Store CalHeatmap instances
-
-// Add these functions before the DOMContentLoaded event listener
+export let heatmapInstances: Record<string, CalHeatmap> = {};
 
 function debounce<F extends (...args: any[]) => any>(
   func: F,

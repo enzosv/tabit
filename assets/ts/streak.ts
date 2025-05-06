@@ -16,7 +16,7 @@ function getWeekNumber(date: Date): number {
 }
 
 function calculateStreak(logs: HabitLogs): StreakInfo {
-  const validLogs: HabitLogs = Object.fromEntries(
+  const validLogs = Object.fromEntries(
     Object.entries(logs).filter(([_, value]) => value > 0)
   );
   const keys = getDateKeysFromLogs(validLogs);
