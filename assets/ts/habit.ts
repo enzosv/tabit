@@ -253,19 +253,18 @@ function setupHabitEventListeners(
       clearLog(habitName, allHabits, getSelectedDay())
     );
 
-  $(root).find(".edit-habit").popover({
-    html: true,
-    placement: "bottom",
-    sanitize: false,
-  });
-
-  $(document).on("shown.bs.popover", function (e) {
-    // Use a short timeout to ensure content is in the DOM
-    setTimeout(() => {
-      setupEditPopover(habitName, allHabits);
-      // const habitName = $(root).find(".habit-title").text();
-    }, 0);
-  });
+  $(root)
+    .find(".edit-habit")
+    .popover({
+      html: true,
+      placement: "bottom",
+      sanitize: false,
+    })
+    .on("click", () => {
+      setTimeout(() => {
+        setupEditPopover(habitName, allHabits);
+      }, 0);
+    });
 }
 
 function setupEditPopover(habitName: string, allHabits: HabitData) {
