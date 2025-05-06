@@ -55,8 +55,8 @@ type LogHabitRequest struct {
 }
 
 type SyncDataRequest struct {
-	LastUpdated int64     `json:"client_timestamp"` // Unix milliseconds UTC
-	HabitData   HabitData `json:"habit_data"`
+	LastUpdated int64                `json:"client_timestamp"` // Unix milliseconds UTC
+	HabitData   map[string]HabitData `json:"habit_data"`
 }
 
 type HabitData struct {
