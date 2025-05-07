@@ -124,7 +124,39 @@ async function compileTs() {
   }
 }
 
-await Promise.all([compileCss(), compileTs()]);
+async function copyServiceWorker() {
+  try {
+    const start = performance.now();
+
+    // Read the service worker file
+    const swContent = await Deno.readTextFile("assets/js/service-worker.js");
+
+    // Minify the service worker in production
+    let finalContent = swContent;
+    if (!DEV_MODE) {
+      const result = await esbuild.build({
+        stdin: {
+          contents: swContent,
+          loader: "js",
+        },
+        minify: true,
+        write: false,
+      });
+      finalContent = new TextDecoder().decode(result.outputFiles[0].contents);
+    }
+
+    // Write the service worker to public directory
+    await Deno.writeTextFile("public/service-worker.js", finalContent);
+
+    const duration = (performance.now() - start).toFixed(2);
+    console.log(`✅ Service worker copied in ${duration}ms`);
+  } catch (error) {
+    console.error("❌ Service worker copy failed:", error);
+    throw error;
+  }
+}
+
+await Promise.all([compileCss(), compileTs(), copyServiceWorker()]);
 if (!WATCH_MODE) {
   esbuild.stop();
 }
