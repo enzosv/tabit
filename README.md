@@ -35,7 +35,7 @@
   - [ ] export
 - Habits
   - [x] streak label
-  - [ ] weekly target 🏆
+  - [x] weekly target 🏆
   - [x] order
   - [ ] color
   - [x] rename
