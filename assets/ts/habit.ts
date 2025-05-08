@@ -114,12 +114,14 @@ function initializeAndConfigureHeatmap(
       value,
     }));
   }
+  // TODO: set range to latest date + 1 month or 6
+  // TODO: paginate
 
   cal.paint(
     {
       theme: "dark",
       itemSelector: heatmapSelector,
-      range: 12,
+      range: 6,
       domain: { type: "month" },
       subDomain: { type: "day", radius: 2, width: 16, height: 16 },
       data: { source: data, x: "date", y: "value" },
