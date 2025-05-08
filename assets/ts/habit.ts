@@ -191,15 +191,6 @@ export function setupHabit(habitName: string, allHabits: HabitMap) {
   if (!habit) {
     return;
   }
-  const heatmapSelector = `#cal-${habitName
-    .replace(/\s+/g, "-")
-    .toLowerCase()}`;
-  const cal = initializeAndConfigureHeatmap(
-    habitName,
-    heatmapSelector,
-    habit,
-    getHabitStartDate(habit.logs)
-  );
 
   const dayLabel = root.querySelector<HTMLButtonElement>(".day-label");
 
@@ -215,14 +206,25 @@ export function setupHabit(habitName: string, allHabits: HabitMap) {
     }
   );
 
-  // 4. Setup heatmap click interaction (updates selectedDay via callback)
-  setupHeatmapClickHandler(cal, (date) => {
-    selectedDay = date; // Update state when a day is clicked
-    updateDayLabel(dayLabel, date);
-  });
-
   updateStreakDisplay(habitName, allHabits[habitName].logs);
   updateWeeklyGoalDisplay(habitName, allHabits[habitName]);
+  // defer heatmap paint
+  setTimeout(() => {
+    const heatmapSelector = `#cal-${habitName
+      .replace(/\s+/g, "-")
+      .toLowerCase()}`;
+    const cal = initializeAndConfigureHeatmap(
+      habitName,
+      heatmapSelector,
+      habit,
+      getHabitStartDate(habit.logs)
+    );
+
+    setupHeatmapClickHandler(cal, (date) => {
+      selectedDay = date; // Update state when a day is clicked
+      updateDayLabel(dayLabel, date);
+    });
+  }, 0);
 }
 
 // --- Event Listener Setup ---
