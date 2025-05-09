@@ -94,6 +94,7 @@ function addNewHabit(habitName: string, habitData: HabitMap) {
 // --- Rendering Functions ---
 
 export function renderAllHabits(habitMap: HabitMap) {
+  // TODO: do not repaint if data is the same
   const habitsContainer = document.getElementById("habits-container");
   const template = document.getElementById(
     "habit-template"

@@ -114,7 +114,8 @@ function initializeAndConfigureHeatmap(
       value,
     }));
   }
-  // TODO: set range to latest date + 1 month or 6
+  // TODO: set range to latest date + 1 month or 4 for mobile 6 for desktop
+  // TODO: set range based on available space
   // TODO: paginate
 
   cal.paint(
