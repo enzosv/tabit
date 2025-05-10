@@ -1,3 +1,5 @@
+import { tryCatch } from "../ts/try-catch.ts";
+
 importScripts(
   "https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js"
 );
@@ -55,12 +57,36 @@ function startWorkbox() {
     })
   );
 
-  // Optional: Cache API requests (for syncing offline data)
+  // Example route for your /api/sync endpoint
   workbox.routing.registerRoute(
-    ({ url }) => url.pathname.startsWith("/api/"),
-    new workbox.strategies.NetworkFirst({
-      cacheName: "api-cache",
-    })
+    ({ url }) => url.pathname === "/api/sync",
+    async ({ request }) => {
+      try {
+        const { response, error } = await tryCatch(fetch(request.clone()));
+        if (error) {
+          throw error;
+        }
+        const { data, dataError } = await tryCatch(response.clone().json());
+        localStorage.setItem("lastSync", JSON.stringify(data));
+
+        if (dataError) {
+          throw error;
+        }
+        return response;
+      } catch {
+        const cached = localStorage.getItem("lastSync");
+        if (cached) {
+          return new Response(cached, {
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ error: "Offline and no cache" }), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    },
+    "GET"
   );
 }
 

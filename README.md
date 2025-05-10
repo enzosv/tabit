@@ -44,7 +44,7 @@
   - [ ] remove unused css
   - [ ] remove unused js
   - [ ] bundle vendor js
-  - [ ] serviceworker cache
+  - [x] serviceworker cache
   - [ ] per event api call
   - [ ] disable buttons until sync is done
 
