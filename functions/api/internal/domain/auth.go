@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"tabit-serverless/internal/datastore"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -41,7 +42,7 @@ func parseAndVerifyToken(token_string string) (*string, error) {
 	return &subject, nil
 }
 
-func UserFromToken(ctx context.Context, ds DataStore, token_string string) (*string, *HTTPError) {
+func UserFromToken(ctx context.Context, ds datastore.DataStore, token_string string) (*string, error) {
 	user_id, err := parseAndVerifyToken(token_string)
 	if err != nil {
 		fmt.Println(err)

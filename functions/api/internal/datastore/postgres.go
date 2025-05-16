@@ -1,10 +1,10 @@
-package main
+package datastore
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"log/slog"
-	"net/http"
 
 	"github.com/go-jet/jet/v2/qrm"
 
@@ -19,23 +19,19 @@ func (ds *PostgresDataStore) Close() error {
 	return ds.DB.Close()
 }
 
-func (ds *PostgresDataStore) CreateUser(ctx context.Context, user_id string) *HTTPError {
+func (ds *PostgresDataStore) CreateUser(ctx context.Context, user_id string) error {
 	user := model.Users{UserID: user_id}
 
 	stmt := Users.INSERT(Users.UserID).MODEL(user).ON_CONFLICT().DO_NOTHING()
 
 	_, err := stmt.ExecContext(ctx, ds.DB)
 	if err != nil {
-		return &HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to create user",
-			Err:     err,
-		}
+		return fmt.Errorf("Failed to create user: %w", err)
 	}
 	return nil
 }
 
-func (ds *PostgresDataStore) SyncUserData(ctx context.Context, user_id string, last_updated int64, jsonData []byte) (*UserSyncStateModel, *HTTPError) {
+func (ds *PostgresDataStore) SyncUserData(ctx context.Context, user_id string, last_updated int64, jsonData []byte) (*UserSyncStateModel, error) {
 
 	var existing model.UserSyncState
 	stmt := SELECT(UserSyncState.AllColumns).
@@ -47,13 +43,13 @@ func (ds *PostgresDataStore) SyncUserData(ctx context.Context, user_id string, l
 		log.Println(stmt.Sql())
 
 		slog.ErrorContext(ctx, "Error querying sync state", "user", user_id, "error", err)
-		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state", Err: err}
+		return nil, fmt.Errorf("Error querying sync state: %w", err)
 	}
 	if err != qrm.ErrNoRows {
 		if existing.UserID == "" {
 			log.Println(stmt.Sql())
 			slog.WarnContext(ctx, "existing is likely invalid", "data", existing.Data, "user", existing.UserID)
-			return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state"}
+			return nil, fmt.Errorf("Error querying sync state: %w", err)
 		}
 
 		if existing.LastUpdated > last_updated {
@@ -82,7 +78,7 @@ func (ds *PostgresDataStore) SyncUserData(ctx context.Context, user_id string, l
 	_, err = upsert.ExecContext(ctx, ds.DB)
 	if err != nil {
 		slog.ErrorContext(ctx, "Error upserting sync state", "user", user_id, "err", err)
-		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Failed to save sync state", Err: err}
+		return nil, fmt.Errorf("Error upserting sync state: %w", err)
 	}
 
 	var dest model.UserSyncState

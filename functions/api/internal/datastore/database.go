@@ -1,4 +1,4 @@
-package main
+package datastore
 
 import (
 	"context"
@@ -27,7 +27,7 @@ type UserSyncStateModel struct {
 // DataStore defines the interface for data storage operations
 type DataStore interface {
 	Close() error
-	SyncUserData(ctx context.Context, user_id string, last_updated int64, jsonData []byte) (*UserSyncStateModel, *api.HTTPError)
+	SyncUserData(ctx context.Context, user_id string, last_updated int64, jsonData []byte) (*UserSyncStateModel, error)
 	CreateUser(ctx context.Context, user_id string) error
 }
 
