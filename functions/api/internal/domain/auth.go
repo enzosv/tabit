@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"context"
@@ -41,7 +41,7 @@ func parseAndVerifyToken(token_string string) (*string, error) {
 	return &subject, nil
 }
 
-func userFromToken(ctx context.Context, ds DataStore, token_string string) (*string, *HTTPError) {
+func UserFromToken(ctx context.Context, ds DataStore, token_string string) (*string, *HTTPError) {
 	user_id, err := parseAndVerifyToken(token_string)
 	if err != nil {
 		fmt.Println(err)

@@ -1,7 +1,8 @@
-package api
+package fiberhandler
 
 import (
 	"strconv"
+	api "tabit-serverless/internal/domain"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,7 +25,7 @@ func LogHabit(c *fiber.Ctx) error {
 		})
 	}
 
-	var req LogHabitRequest
+	var req api.LogHabitRequest
 	err = c.BodyParser(&req)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -38,12 +39,12 @@ func LogHabit(c *fiber.Ctx) error {
 		})
 	}
 
-	dbErr := logHabit(c.Context(), db, req, int32(habitID))
-	if dbErr != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
+	// dbErr := logHabit(c.Context(), db, req, int32(habitID))
+	// if dbErr != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 		"error": err.Error(),
+	// 	})
+	// }
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "ok",
 	})

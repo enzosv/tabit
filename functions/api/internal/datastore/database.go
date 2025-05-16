@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-	"net/http"
 
 	"github.com/go-jet/jet/v2/qrm"
 	. "github.com/go-jet/jet/v2/sqlite"
@@ -16,6 +15,7 @@ import (
 
 	"tabit-serverless/.gen/model"
 	. "tabit-serverless/.gen/table"
+	api "tabit-serverless/internal/domain"
 )
 
 type UserSyncStateModel struct {
@@ -27,8 +27,8 @@ type UserSyncStateModel struct {
 // DataStore defines the interface for data storage operations
 type DataStore interface {
 	Close() error
-	SyncUserData(ctx context.Context, user_id string, last_updated int64, jsonData []byte) (*UserSyncStateModel, *HTTPError)
-	CreateUser(ctx context.Context, user_id string) *HTTPError
+	SyncUserData(ctx context.Context, user_id string, last_updated int64, jsonData []byte) (*UserSyncStateModel, *api.HTTPError)
+	CreateUser(ctx context.Context, user_id string) error
 }
 
 // DBType represents the supported database types
@@ -80,22 +80,22 @@ type HabitLogCount struct {
 	Count int
 }
 
-func syncUserData(ctx context.Context, db *sql.DB, user_id string, req SyncDataRequest) (*model.UserSyncState, *HTTPError) {
-	jsonData, jsonErr := json.Marshal(req.HabitData)
-	if jsonErr != nil {
-		log.Printf("Error marshaling habit data for user %s: %v", user_id, jsonErr)
-		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Failed to serialize data", Err: jsonErr}
+func syncUserData(ctx context.Context, db *sql.DB, user_id string, req api.SyncDataRequest) (*model.UserSyncState, error) {
+	jsonData, err := json.Marshal(req.HabitData)
+	if err != nil {
+		log.Printf("Error marshaling habit data for user %s: %v", user_id, err)
+		return nil, fmt.Errorf("Failed to serialize data: %w", err)
 	}
 
 	var existing model.UserSyncState
 	stmt := SELECT(UserSyncState.AllColumns).
 		FROM(UserSyncState).
 		WHERE(UserSyncState.UserID.EQ(String(user_id)))
-	err := stmt.QueryContext(ctx, db, &existing)
+	err = stmt.QueryContext(ctx, db, &existing)
 
 	if err != nil && err != qrm.ErrNoRows {
 		log.Printf("Error querying sync state for user %s: %v", user_id, err)
-		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Database error checking sync state", Err: err}
+		return nil, fmt.Errorf("Error checking sync state: %w", err)
 	}
 
 	if existing.UserID != nil && existing.LastUpdated > int32(req.LastUpdated) {
@@ -117,12 +117,12 @@ func syncUserData(ctx context.Context, db *sql.DB, user_id string, req SyncDataR
 	_, err = upsert.ExecContext(ctx, db)
 	if err != nil {
 		slog.ErrorContext(ctx, "Error upserting sync state", "user", user_id, "err", err)
-		return nil, &HTTPError{Code: http.StatusInternalServerError, Message: "Failed to save sync state", Err: err}
+		return nil, fmt.Errorf("Failed to save sync state: %w", err)
 	}
 	return &model, nil
 }
 
-func logHabit(ctx context.Context, db *sql.DB, req LogHabitRequest, habitID int32) *HTTPError {
+func LogHabit(ctx context.Context, db *sql.DB, req api.LogHabitRequest, habitID int32) error {
 	habitLog := model.HabitLogs{HabitID: habitID, Day: req.Day}
 	stmt := HabitLogs.INSERT(HabitLogs.HabitID, HabitLogs.Day, HabitLogs.Count).
 		MODEL(habitLog).
@@ -130,30 +130,25 @@ func logHabit(ctx context.Context, db *sql.DB, req LogHabitRequest, habitID int3
 		DO_UPDATE(SET(HabitLogs.Count.SET(HabitLogs.EXCLUDED.Count)))
 	_, err := stmt.ExecContext(ctx, db)
 	if err != nil {
-		return &HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to log habit",
-		}
+		return fmt.Errorf("Failed to log habit %w", err)
 	}
 	return nil
 }
 
-func createHabit(ctx context.Context, db *sql.DB, req CreateHabitRequest) (*model.Habits, *HTTPError) {
+func createHabit(ctx context.Context, db *sql.DB, req api.CreateHabitRequest) (*model.Habits, error) {
 	habit := model.Habits{UserID: req.UserID, Name: req.Name}
 	stmt := Habits.INSERT(Habits.UserID, Habits.Name).MODEL(habit).RETURNING(Habits.AllColumns)
 
 	dest := model.Habits{}
 	err := stmt.QueryContext(ctx, db, &dest)
 	if err != nil {
-		return nil, &HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to insert habit",
-		}
+		return nil, fmt.Errorf("Failed to insert habit: %w", err)
+
 	}
 	return &dest, nil
 }
 
-func getHabits(ctx context.Context, db *sql.DB, user_id string) ([]HabitInfo, *HTTPError) {
+func getHabits(ctx context.Context, db *sql.DB, user_id string) ([]HabitInfo, error) {
 
 	// 	select habit_id, name, day, count(day)
 	// from habits h
@@ -178,10 +173,7 @@ func getHabits(ctx context.Context, db *sql.DB, user_id string) ([]HabitInfo, *H
 	}
 	err := stmt.QueryContext(ctx, db, &dest)
 	if err != nil {
-		return nil, &HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to query habits",
-		}
+		return nil, fmt.Errorf("Failed to query habits: %w", err)
 	}
 
 	habitMap := make(map[int64]*HabitInfo)
@@ -214,18 +206,14 @@ func getHabits(ctx context.Context, db *sql.DB, user_id string) ([]HabitInfo, *H
 }
 
 // Create a new user
-func createUser(ctx context.Context, db *sql.DB, user_id string) *HTTPError {
+func createUser(ctx context.Context, db *sql.DB, user_id string) error {
 	user := model.Users{UserID: &user_id}
 
 	stmt := Users.INSERT(Users.UserID).MODEL(user).ON_CONFLICT().DO_NOTHING()
 
 	_, err := stmt.ExecContext(ctx, db)
 	if err != nil {
-		return &HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: "Failed to create user",
-			Err:     err,
-		}
+		return fmt.Errorf("Failed to create user: %w", err)
 	}
 	return nil
 }

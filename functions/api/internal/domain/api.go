@@ -50,3 +50,25 @@ func (lh LogHabitRequest) Validate() error {
 	// TODO: check id owned by user
 	return nil
 }
+
+// Request and response types
+type CreateHabitRequest struct {
+	UserID string `json:"user_id"` // TODO: get from auth
+	Name   string `json:"name"`
+}
+
+type SyncDataRequest struct {
+	LastUpdated int64                `json:"client_timestamp"` // Unix milliseconds UTC
+	HabitData   map[string]HabitData `json:"habit_data"`
+}
+
+type HabitData struct {
+	Logs       map[string]int `json:"logs"`
+	WeeklyGoal int            `json:"weekly_goal"`
+	Sort       int            `json:"sort"`
+}
+
+type Response struct {
+	Message string      `json:"message,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
+}
